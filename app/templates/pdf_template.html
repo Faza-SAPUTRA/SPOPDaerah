@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <title>SPOP Print</title>
+    <style>
+        @page { size: A4 portrait; margin: 0; }
+        body {
+            margin: 0;
+            padding: 0;
+            background: #555;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .page {
+            position: relative;
+            width: 1190px;
+            height: 1683px;
+            margin: 20px 0;
+            background: #fff;
+            box-shadow: 0 0 10px rgba(0,0,0,.5);
+            overflow: hidden;
+            page-break-after: always;
+        }
+        .bg-img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        .cells {
+            position: absolute;
+            z-index: 5;
+            display: grid;
+            grid-template-columns: repeat(var(--count), 1fr);
+            align-items: center;
+            justify-items: center;
+            font-family: "Courier New", Courier, monospace;
+            font-size: 18px;
+            line-height: 1;
+            font-weight: 700;
+            color: #000;
+            box-sizing: border-box;
+            pointer-events: none;
+        }
+        .cells span {
+            width: 100%;
+            text-align: center;
+            transform: translateY(2px);
+        }
+        .mark {
+            position: absolute;
+            z-index: 6;
+            width: 28px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif;
+            font-size: 20px;
+            line-height: 1;
+            font-weight: 700;
+            color: #000;
+            pointer-events: none;
+        }
+        .sign {
+            position: absolute;
+            z-index: 6;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            line-height: 1.15;
+            font-weight: 700;
+            color: #000;
+            pointer-events: none;
+        }
+        .print-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            border: 0;
+            border-radius: 5px;
+            background: #A81E2A;
+            color: #fff;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 14px;
+            box-shadow: 0 4px 6px rgba(0,0,0,.1);
+        }
+        .print-btn:hover { background: #8C1822; }
+        @media print {
+            body { background: #fff; }
+            .page {
+                margin: 0;
+                box-shadow: none;
+                transform: scale(.67);
+                transform-origin: top left;
+            }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+{% macro cells(value, x, y, w, count, h=24, size=18) -%}
+    {%- set text = ((value or '') ~ '')[:count].ljust(count) -%}
+    <div class="cells" style="left: {{ x }}px; top: {{ y }}px; width: {{ w }}px; height: {{ h }}px; --count: {{ count }}; font-size: {{ size }}px;">
+        {%- for i in range(count) -%}<span>{{ text[i] }}</span>{%- endfor -%}
+    </div>
+{%- endmacro %}
+
+{% macro mark(value, code, x, y) -%}
+    {%- if option_code(value) == (code|string) -%}<div class="mark" style="left: {{ x }}px; top: {{ y }}px;">X</div>{%- endif -%}
+{%- endmacro %}
+
+{% macro nop_boxes(nop, y, first_x=299) -%}
+    {%- set n = (digits_only(nop) ~ '').ljust(18) -%}
+    {{ cells(n[0:2], first_x, y, 53, 2) }}
+    {{ cells(n[2:4], first_x + 74, y, 53, 2) }}
+    {{ cells(n[4:7], first_x + 149, y, 77, 3) }}
+    {{ cells(n[7:10], first_x + 247, y, 81, 3) }}
+    {{ cells(n[10:13], first_x + 349, y, 77, 3) }}
+    {{ cells(n[13:17], first_x + 448, y, 102, 4) }}
+    {{ cells(n[17:18], first_x + 600, y, 28, 1) }}
+{%- endmacro %}
+
+{% macro text_row(value, x, y, w, count) -%}
+    {{ cells((value or '').upper(), x, y, w, count) }}
+{%- endmacro %}
+
+{% macro date_cells(date_value, x, y) -%}
+    {{ cells(date_value.strftime('%d'), x, y, 51, 2) }}
+    {{ cells(date_value.strftime('%m'), x + 77, y, 51, 2) }}
+    {{ cells(date_value.strftime('%Y'), x + 153, y, 102, 4) }}
+{%- endmacro %}
+
+{% set img_pfx = 'tangsel' if kop_type == 'tangsel' else 'kab' %}
+{% set op_parts = split_rt_rw(data.rt_rw_op) %}
+{% set wp_parts = split_rt_rw(data.rt_rw_wp) %}
+
+<button class="no-print print-btn" onclick="window.print()">Cetak Formulir Sempurna</button>
+
+<div class="page">
+    <img class="bg-img" src="{{ url_for('static', filename='img/' + img_pfx + '_1.png') }}">
+
+    {{ mark(data.jenis_transaksi, 1, 299, 250) }}
+    {{ mark(data.jenis_transaksi, 2, 599, 250) }}
+    {{ mark(data.jenis_transaksi, 3, 924, 250) }}
+
+    {{ nop_boxes(data.nop, 339) }}
+    {{ nop_boxes(data.nop_bersama, 381) }}
+    {{ nop_boxes(data.nop_asal, 491) }}
+    {{ cells(digits_only(data.no_sppt_lama), 299, 532, 127, 5) }}
+
+    {{ text_row(data.jalan_op, 50, 675, 774, 30) }}
+    {{ text_row((data.jalan_op or '')[30:], 50, 702, 774, 30) }}
+    {{ text_row(data.blok_kav_no_op, 846, 675, 303, 12) }}
+    {{ text_row(data.kelurahan_op, 50, 764, 650, 25) }}
+    {{ cells(op_parts[1], 846, 764, 56, 2) }}
+    {{ cells(op_parts[0], 949, 764, 77, 3) }}
+
+    {{ mark(data.status_wp, 1, 223, 886) }}
+    {{ mark(data.status_wp, 2, 398, 886) }}
+    {{ mark(data.status_wp, 3, 599, 886) }}
+    {{ mark(data.status_wp, 4, 821, 886) }}
+    {{ mark(data.status_wp, 5, 998, 886) }}
+    {{ mark(data.pekerjaan_wp, 1, 223, 927) }}
+    {{ mark(data.pekerjaan_wp, 2, 398, 927) }}
+    {{ mark(data.pekerjaan_wp, 3, 599, 927) }}
+    {{ mark(data.pekerjaan_wp, 4, 821, 927) }}
+    {{ mark(data.pekerjaan_wp, 5, 998, 927) }}
+
+    {{ text_row(data.nama_wp, 50, 1010, 799, 31) }}
+    {{ text_row((data.nama_wp or '')[31:], 50, 1036, 799, 31) }}
+    {{ cells(digits_only(data.npwp_wp), 870, 1010, 305, 15, 23, 16) }}
+    {{ text_row(data.jalan_wp, 50, 1098, 774, 30) }}
+    {{ text_row((data.jalan_wp or '')[30:], 50, 1127, 774, 30) }}
+    {{ text_row(data.blok_kav_no_wp, 846, 1098, 303, 12) }}
+    {{ text_row(data.kelurahan_wp, 50, 1189, 650, 25) }}
+    {{ cells(wp_parts[1], 846, 1189, 56, 2) }}
+    {{ cells(wp_parts[0], 949, 1189, 77, 3) }}
+    {{ text_row(data.kabupaten_wp, 50, 1251, 650, 25) }}
+    {{ cells(digits_only(data.no_ktp_wp), 50, 1313, 650, 25) }}
+
+    {{ cells(whole_number(data.luas_bumi, 6), 198, 1437, 277, 11) }}
+    {{ text_row(data.kelas_zona_bumi, 1097, 1437, 53, 2) }}
+    {{ mark(data.jenis_tanah, 1, 272, 1499) }}
+    {{ mark(data.jenis_tanah, 2, 497, 1499) }}
+    {{ mark(data.jenis_tanah, 3, 722, 1499) }}
+    {{ mark(data.jenis_tanah, 4, 924, 1499) }}
+
+</div>
+
+<div class="page">
+    <img class="bg-img" src="{{ url_for('static', filename='img/' + img_pfx + '_2.png') }}">
+
+    {{ cells(whole_number(data.jumlah_bangunan, 3), 248, 99, 79, 3) }}
+
+    <div class="sign" style="left: 210px; top: 325px; width: 220px; text-align: center;">{{ (data.nama_wp or '').upper() }}</div>
+    <div class="sign" style="left: 520px; top: 325px; width: 250px; text-align: center;">{{ data.created_at.strftime('%d-%m-%Y') }}</div>
+
+    {{ date_cells(data.created_at, 272, 514) }}
+    {{ date_cells(data.created_at, 870, 514) }}
+
+    <div class="sign" style="left: 858px; top: 735px;">{{ data.longitude or '' }}</div>
+    <div class="sign" style="left: 858px; top: 760px;">{{ data.latitude or '' }}</div>
+</div>
+
+{% if data.jenis_penggunaan_bangunan %}
+<div class="page">
+    <img class="bg-img" src="{{ url_for('static', filename='img/' + img_pfx + '_3.png') }}">
+
+    {{ mark(data.jenis_transaksi, 1, 299, 180) }}
+    {{ mark(data.jenis_transaksi, 2, 599, 180) }}
+    {{ mark(data.jenis_transaksi, 3, 924, 180) }}
+
+    {{ nop_boxes(data.nop, 276, 198) }}
+    {{ cells(whole_number(data.jumlah_bangunan, 3), 1047, 254, 78, 3) }}
+    {{ cells('001', 1049, 298, 76, 3) }}
+
+    {{ mark(data.jenis_penggunaan_bangunan, 1, 248, 415) }}
+    {{ mark(data.jenis_penggunaan_bangunan, 2, 522, 415) }}
+    {{ mark(data.jenis_penggunaan_bangunan, 3, 846, 415) }}
+    {{ mark(data.jenis_penggunaan_bangunan, 4, 248, 445) }}
+    {{ mark(data.jenis_penggunaan_bangunan, 5, 522, 445) }}
+    {{ mark(data.jenis_penggunaan_bangunan, 6, 846, 445) }}
+    {{ mark(data.jenis_penggunaan_bangunan, 7, 248, 474) }}
+    {{ mark(data.jenis_penggunaan_bangunan, 8, 522, 474) }}
+    {{ mark(data.jenis_penggunaan_bangunan, 9, 846, 474) }}
+    {{ mark(data.jenis_penggunaan_bangunan, 10, 248, 504) }}
+    {{ mark(data.jenis_penggunaan_bangunan, 11, 522, 504) }}
+    {{ mark(data.jenis_penggunaan_bangunan, 12, 846, 504) }}
+    {{ mark(data.jenis_penggunaan_bangunan, 13, 248, 534) }}
+    {{ mark(data.jenis_penggunaan_bangunan, 14, 522, 534) }}
+    {{ mark(data.jenis_penggunaan_bangunan, 15, 846, 534) }}
+    {{ mark(data.jenis_penggunaan_bangunan, 16, 248, 564) }}
+
+    {{ cells(whole_number(data.luas_bangunan, 6), 248, 624, 277, 11) }}
+    {{ cells(whole_number(data.jumlah_lantai, 3), 821, 624, 81, 3) }}
+    {{ cells(whole_number(data.tahun_dibangun), 248, 657, 104, 4) }}
+    {{ cells(whole_number(data.tahun_direnovasi), 248, 689, 104, 4) }}
+    {{ cells(whole_number(data.daya_listrik), 973, 689, 176, 7) }}
+
+    {{ mark(data.kondisi_pada_umumnya, 1, 248, 733) }}
+    {{ mark(data.kondisi_pada_umumnya, 2, 423, 733) }}
+    {{ mark(data.kondisi_pada_umumnya, 3, 599, 733) }}
+    {{ mark(data.kondisi_pada_umumnya, 4, 772, 733) }}
+    {{ mark(data.konstruksi, 1, 248, 777) }}
+    {{ mark(data.konstruksi, 2, 423, 777) }}
+    {{ mark(data.konstruksi, 3, 599, 777) }}
+    {{ mark(data.konstruksi, 4, 772, 777) }}
+    {{ mark(data.atap, 1, 248, 807) }}
+    {{ mark(data.atap, 2, 423, 807) }}
+    {{ mark(data.atap, 3, 599, 807) }}
+    {{ mark(data.atap, 4, 772, 807) }}
+    {{ mark(data.atap, 5, 924, 807) }}
+    {{ mark(data.dinding, 1, 248, 864) }}
+    {{ mark(data.dinding, 2, 423, 864) }}
+    {{ mark(data.dinding, 3, 599, 864) }}
+    {{ mark(data.dinding, 4, 772, 864) }}
+    {{ mark(data.dinding, 5, 924, 864) }}
+    {{ mark(data.dinding, 6, 1047, 864) }}
+    {{ mark(data.lantai, 1, 248, 902) }}
+    {{ mark(data.lantai, 2, 423, 902) }}
+    {{ mark(data.lantai, 3, 599, 902) }}
+    {{ mark(data.lantai, 4, 772, 902) }}
+    {{ mark(data.lantai, 5, 924, 902) }}
+    {{ mark(data.langit_langit, 1, 248, 929) }}
+    {{ mark(data.langit_langit, 2, 423, 929) }}
+    {{ mark(data.langit_langit, 3, 599, 929) }}
+
+    {{ cells(whole_number(data.jumlah_ac_split), 248, 1035, 54, 2) }}
+    {{ cells(whole_number(data.jumlah_ac_window), 423, 1035, 52, 2) }}
+    {{ mark(data.ac_sentral, 1, 899, 1035) }}
+    {{ mark(data.ac_sentral, 2, 1047, 1035) }}
+    {{ cells(whole_number(data.luas_kolam_renang), 248, 1100, 104, 4) }}
+    {{ mark(data.kolam_renang_tipe, 1, 248, 1144) }}
+    {{ mark(data.kolam_renang_tipe, 2, 448, 1144) }}
+    {{ cells(whole_number(data.luas_perkerasan_halaman_ringan), 698, 1144, 126, 5) }}
+    {{ cells(whole_number(data.luas_perkerasan_halaman_sedang), 698, 1172, 126, 5) }}
+    {{ cells(whole_number(data.luas_perkerasan_halaman_berat), 924, 1144, 127, 5) }}
+    {{ cells(whole_number(data.luas_perkerasan_halaman_dgn_penutup), 924, 1172, 127, 5) }}
+
+    {{ cells(whole_number(data.jumlah_lift_penumpang), 698, 1282, 52, 2) }}
+    {{ cells(whole_number(data.jumlah_lift_kapsul), 698, 1315, 52, 2) }}
+    {{ cells(whole_number(data.jumlah_lift_barang), 698, 1348, 52, 2) }}
+    {{ cells(whole_number(data.jumlah_tangga_berjalan_kurang), 1097, 1315, 52, 2) }}
+    {{ cells(whole_number(data.jumlah_tangga_berjalan_lebih), 1097, 1348, 52, 2) }}
+
+    {{ cells(whole_number(data.panjang_pagar), 248, 1437, 104, 4) }}
+    {% set bahan = (data.bahan_pagar or '').lower() %}
+    {% if 'baja' in bahan or 'besi' in bahan %}<div class="mark" style="left: 248px; top: 1466px;">X</div>{% endif %}
+    {% if 'bata' in bahan or 'beton' in bahan or 'batako' in bahan %}<div class="mark" style="left: 423px; top: 1466px;">X</div>{% endif %}
+    {{ mark(data.pemadam_hydrant, 1, 949, 1437) }}
+    {{ mark(data.pemadam_hydrant, 2, 1047, 1437) }}
+    {{ mark(data.pemadam_sprinkler, 1, 949, 1466) }}
+    {{ mark(data.pemadam_sprinkler, 2, 1047, 1466) }}
+    {{ mark(data.pemadam_fire_alarm, 1, 949, 1495) }}
+    {{ mark(data.pemadam_fire_alarm, 2, 1047, 1495) }}
+
+    {{ cells(whole_number(data.jumlah_saluran_pes_pabx), 248, 1561, 104, 4) }}
+    {{ cells(whole_number(data.kedalaman_sumur_artesis), 899, 1561, 102, 4) }}
+</div>
+
+<div class="page">
+    <img class="bg-img" src="{{ url_for('static', filename='img/' + img_pfx + '_4.png') }}">
+
+    {% set jpb = option_code(data.jenis_penggunaan_bangunan) %}
+    {% if jpb in ['3', '8'] %}<div class="mark" style="left: 50px; top: 108px;">X</div>{% endif %}
+    {% if jpb in ['2', '9'] %}<div class="mark" style="left: 50px; top: 276px;">X</div>{% endif %}
+    {% if jpb == '4' %}<div class="mark" style="left: 50px; top: 373px;">X</div>{% endif %}
+    {% if jpb == '5' %}<div class="mark" style="left: 50px; top: 468px;">X</div>{% endif %}
+    {% if jpb == '6' %}<div class="mark" style="left: 50px; top: 619px;">X</div>{% endif %}
+    {% if jpb == '7' %}<div class="mark" style="left: 50px; top: 714px;">X</div>{% endif %}
+    {% if jpb == '12' %}<div class="mark" style="left: 50px; top: 893px;">X</div>{% endif %}
+    {% if jpb == '13' %}<div class="mark" style="left: 50px; top: 990px;">X</div>{% endif %}
+    {% if jpb == '15' %}<div class="mark" style="left: 50px; top: 1143px;">X</div>{% endif %}
+    {% if jpb == '16' %}<div class="mark" style="left: 50px; top: 1225px;">X</div>{% endif %}
+
+    {{ date_cells(data.created_at, 349, 1430) }}
+    {{ date_cells(data.created_at, 349, 1456) }}
+    {{ date_cells(data.created_at, 870, 1456) }}
+</div>
+{% endif %}
+
+</body>
+</html>

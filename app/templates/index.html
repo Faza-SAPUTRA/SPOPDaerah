@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal SPOP - Sinar Mas Land</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #A81E2A;
+            --primary-hover: #8C1822;
+            --bg: #F8F9FA;
+            --card-bg: #FFFFFF;
+            --text-main: #333333;
+            --text-muted: #666666;
+            --border: #E0E0E0;
+            --radius: 12px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+        }
+        .header { margin-bottom: 3rem; }
+        .header h1 {
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .header p { color: var(--text-muted); font-size: 1.2rem; }
+        
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        .region-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 3rem 2rem;
+            text-decoration: none;
+            color: var(--text-main);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border-top: 6px solid var(--primary);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .region-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 25px rgba(168, 30, 42, 0.15);
+        }
+        .icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+        }
+        .region-card h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+        .region-card p {
+            color: var(--text-muted);
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+        
+        /* Admin Button */
+        .admin-link {
+            margin-top: 4rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            transition: all 0.2s;
+        }
+        .admin-link:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>Portal SPOP</h1>
+        <p>Silakan pilih wilayah objek pajak Anda</p>
+    </div>
+
+    <div class="cards-grid">
+        <a href="/form/tangsel" class="region-card">
+            <div class="icon">🏢</div>
+            <h2>Tangerang Selatan</h2>
+            <p>Formulir SPOP khusus untuk wilayah Kota Tangerang Selatan (Awalan NOP: 3676)</p>
+        </a>
+
+        <a href="/form/kab_tangerang" class="region-card">
+            <div class="icon">🏭</div>
+            <h2>Kabupaten Tangerang</h2>
+            <p>Formulir SPOP khusus untuk wilayah Kabupaten Tangerang (Awalan NOP: 3719)</p>
+        </a>
+    </div>
+    
+    <a href="/admin/export" class="admin-link">📥 Download Semua Data (Excel)</a>
+</div>
+
+</body>
+</html>

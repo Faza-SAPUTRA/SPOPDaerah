@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPOP - Sinar Mas Land</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #A81E2A; /* Soft Crimson / Maroon */
+            --primary-hover: #8C1822;
+            --bg: #F8F9FA; /* Light Gray / Broken White */
+            --card-bg: #FFFFFF;
+            --text-main: #333333;
+            --text-muted: #666666;
+            --border: #E0E0E0;
+            --radius: 8px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            line-height: 1.6;
+            font-size: 16px;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            color: var(--primary);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            font-size: 2rem;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .form-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 2rem;
+            border-top: 5px solid var(--primary);
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+            margin-top: 2rem;
+        }
+        
+        .section-title:first-child {
+            margin-top: 0;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .form-col {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="email"],
+        select {
+            width: 100%;
+            padding: 0.8rem;
+            font-size: 1rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-family: 'Inter', sans-serif;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(168, 30, 42, 0.1);
+        }
+
+        .btn-submit {
+            display: block;
+            width: 100%;
+            padding: 1.2rem;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+            margin-top: 2rem;
+        }
+
+        .btn-submit:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-submit:active {
+            transform: scale(0.98);
+        }
+
+        .alert {
+            padding: 1rem;
+            background-color: #ffebee;
+            color: #c62828;
+            border-radius: var(--radius);
+            margin-bottom: 1.5rem;
+        }
+        
+        .helper-text {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <a href="/" style="display: inline-block; margin-bottom: 1rem; color: var(--primary); text-decoration: none; font-weight: 500;">← Kembali ke Beranda</a>
+        <h1>Formulir SPOP</h1>
+        <p>Surat Pemberitahuan Objek Pajak - <strong>{{ region_name }}</strong></p>
+    </div>
+
+    <div class="form-card" style="margin-bottom: 2rem; border-top: 5px solid #2e7d32; background-color: #f1f8e9;">
+        <h3 style="margin-bottom: 0.5rem; color: #2e7d32;">Isi Otomatis via JSON</h3>
+        <p style="font-size: 0.9rem; color: #555; margin-bottom: 1rem;">Upload file JSON untuk mengisi form secara otomatis. Kunci (key) di JSON harus sesuai dengan nama field.</p>
+        <input type="file" id="jsonUpload" accept=".json" style="border: 1px dashed #2e7d32; padding: 1rem; background: white; cursor: pointer;">
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="alert">
+          {% for message in messages %}
+            {{ message }}
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <form class="form-card" action="/submit" method="POST">
+        
+        <div class="section-title">Data Utama</div>
+        <div class="form-row">
+            <div class="form-col form-group">
+                <label for="jenis_transaksi">1. Jenis Transaksi</label>
+                <select id="jenis_transaksi" name="jenis_transaksi">
+                    <option value="1. Perekaman Data">1. Perekaman Data</option>
+                    <option value="2. Pemutakhiran Data">2. Pemutakhiran Data</option>
+                    <option value="3. Penghapusan Data">3. Penghapusan Data</option>
+                </select>
+            </div>
+            <div class="form-col form-group">
+                <label for="nop">2. Nomor Objek Pajak (NOP)</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" value="{{ region_prefix }}" readonly style="width: 80px; background-color: #e9ecef; color: #495057; font-weight: bold; border: 1px solid #ced4da; cursor: not-allowed;" title="Kode Daerah (Otomatis)">
+                    <input type="text" id="nop" name="nop" required placeholder="Sisa 14 digit" maxlength="14" style="flex: 1;">
+                </div>
+                <input type="hidden" name="region_type" value="{{ region_type }}">
+            </div>
+            <div class="form-col form-group">
+                <label for="nop_bersama">3. NOP Bersama</label>
+                <input type="text" id="nop_bersama" name="nop_bersama" placeholder="NOP Bersama (Opsional)">
+            </div>
+        </div>
+
+        <div class="section-title">A. Informasi Tambahan Untuk Data Baru</div>
+        <div class="form-row">
+            <div class="form-col form-group">
+                <label for="nop_asal">4. NOP Asal</label>
+                <input type="text" id="nop_asal" name="nop_asal">
+            </div>
+            <div class="form-col form-group">
+                <label for="no_sppt_lama">5. No. SPPT Lama</label>
+                <input type="text" id="no_sppt_lama" name="no_sppt_lama">
+            </div>
+        </div>
+
+        <div class="section-title">B. Data Objek Pajak</div>
+        <div class="form-group">
+            <label for="jalan_op">6. Nama Jalan</label>
+            <input type="text" id="jalan_op" name="jalan_op">
+        </div>
+        <div class="form-row">
+            <div class="form-col form-group">
+                <label for="blok_kav_no_op">7. Blok / Kav / Nomor</label>
+                <input type="text" id="blok_kav_no_op" name="blok_kav_no_op">
+            </div>
+            <div class="form-col form-group">
+                <label for="kelurahan_op">8. Kelurahan / Desa</label>
+                <input type="text" id="kelurahan_op" name="kelurahan_op">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-col form-group">
+                <label for="rt_rw_op">9 & 10. RW / RT</label>
+                <input type="text" id="rt_rw_op" name="rt_rw_op" placeholder="Contoh: 001/002">
+            </div>
+            <div class="form-col form-group">
+                <label for="kabupaten_op">Kabupaten / Kota</label>
+                <input type="text" id="kabupaten_op" name="kabupaten_op" value="{{ region_name }}" readonly style="background-color: #e9ecef; cursor: not-allowed;">
+            </div>
+        </div>
+
+        <div class="section-title">C. Data Subjek Pajak</div>
+        <div class="form-row">
+            <div class="form-col form-group">
+                <label for="status_wp">11. Status</label>
+                <select id="status_wp" name="status_wp">
+                    <option value="1. Pemilik">1. Pemilik</option>
+                    <option value="2. Penyewa">2. Penyewa</option>
+                    <option value="3. Pengelola">3. Pengelola</option>
+                    <option value="4. Pemakai">4. Pemakai</option>
+                    <option value="5. Sengketa">5. Sengketa</option>
+                </select>
+            </div>
+            <div class="form-col form-group">
+                <label for="pekerjaan_wp">12. Pekerjaan</label>
+                <select id="pekerjaan_wp" name="pekerjaan_wp">
+                    <option value="1. PNS">1. PNS</option>
+                    <option value="2. ABRI">2. ABRI</option>
+                    <option value="3. Pensiunan">3. Pensiunan</option>
+                    <option value="4. Badan">4. Badan</option>
+                    <option value="5. Lainnya">5. Lainnya</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-col form-group">
+                <label for="nama_wp">13. Nama Subjek Pajak</label>
+                <input type="text" id="nama_wp" name="nama_wp" required>
+            </div>
+            <div class="form-col form-group">
+                <label for="npwp_wp">14. NPWP</label>
+                <input type="text" id="npwp_wp" name="npwp_wp">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="jalan_wp">15. Nama Jalan</label>
+            <input type="text" id="jalan_wp" name="jalan_wp">
+        </div>
+        <div class="form-row">
+            <div class="form-col form-group">
+                <label for="blok_kav_no_wp">16. Blok / Kav / Nomor</label>
+                <input type="text" id="blok_kav_no_wp" name="blok_kav_no_wp">
+            </div>
+            <div class="form-col form-group">
+                <label for="kelurahan_wp">17. Kelurahan / Desa</label>
+                <input type="text" id="kelurahan_wp" name="kelurahan_wp">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-col form-group">
+                <label for="rt_rw_wp">18 & 19. RW / RT</label>
+                <input type="text" id="rt_rw_wp" name="rt_rw_wp" placeholder="Contoh: 001/002">
+            </div>
+            <div class="form-col form-group">
+                <label for="kabupaten_wp">20. Kabupaten / Kota</label>
+                <input type="text" id="kabupaten_wp" name="kabupaten_wp">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-col form-group">
+                <label for="no_ktp_wp">21. Nomor KTP</label>
+                <input type="text" id="no_ktp_wp" name="no_ktp_wp">
+            </div>
+            <div class="form-col form-group">
+                <label for="email_wp">Alamat E-mail</label>
+                <input type="email" id="email_wp" name="email_wp">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="kodepos_wp">Kode Pos</label>
+            <input type="text" id="kodepos_wp" name="kodepos_wp">
+        </div>
+
+        <div class="section-title">D. Data Tanah</div>
+        <div class="form-row">
+            <div class="form-col form-group">
+                <label for="luas_bumi">22. Luas Tanah (m²)</label>
+                <input type="number" step="0.01" id="luas_bumi" name="luas_bumi" placeholder="0.00">
+            </div>
+            <div class="form-col form-group">
+                <label for="kelas_zona_bumi">23. Zona Nilai Tanah</label>
+                <input type="text" id="kelas_zona_bumi" name="kelas_zona_bumi">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="jenis_tanah">24. Jenis Tanah</label>
+            <select id="jenis_tanah" name="jenis_tanah">
+                <option value="1. Tanah & Bangunan">1. Tanah & Bangunan</option>
+                <option value="2. Kavling Siap Bangun">2. Kavling Siap Bangun</option>
+                <option value="3. Tanah Kosong">3. Tanah Kosong</option>
+                <option value="4. Fasilitas Umum">4. Fasilitas Umum</option>
+            </select>
+        </div>
+
+        <div class="section-title">E. Data Bangunan</div>
+        <div class="form-row">
+            <div class="form-col form-group">
+                <label for="jumlah_bangunan">25. Jumlah Bangunan</label>
+                <input type="number" id="jumlah_bangunan" name="jumlah_bangunan" placeholder="0">
+            </div>
+            <div class="form-col form-group">
+                <label for="luas_bangunan">Total Luas Bangunan (m²)</label>
+                <input type="number" step="0.01" id="luas_bangunan" name="luas_bangunan" placeholder="0.00">
+            </div>
+        </div>
+
+        <div class="section-title">Sket / Denah Lokasi Objek Pajak</div>
+        <div class="form-row">
+            <div class="form-col form-group">
+                <label for="longitude">Titik Koordinat: Long</label>
+                <input type="text" id="longitude" name="longitude" placeholder="Longitude">
+            </div>
+            <div class="form-col form-group">
+                <label for="latitude">Titik Koordinat: Lat</label>
+                <input type="text" id="latitude" name="latitude" placeholder="Latitude">
+            </div>
+        </div>
+
+        <div class="section-title" style="color: #1976D2; border-bottom-color: #1976D2; margin-top: 3rem;">LAMPIRAN SPOP (LSPOP) - RINCIAN DATA BANGUNAN</div>
+        <div class="form-row">
+            <div class="form-col form-group">
+                <label for="jenis_penggunaan_bangunan">Jenis Penggunaan Bangunan</label>
+                <select id="jenis_penggunaan_bangunan" name="jenis_penggunaan_bangunan">
+                    <option value="">-- Pilih Penggunaan --</option>
+                    <option value="1. Perumahan">1. Perumahan</option>
+                    <option value="2. Perkantoran Swasta">2. Perkantoran Swasta</option>
+                    <option value="3. Pabrik">3. Pabrik</option>
+                    <option value="4. Toko/Apotik/Pasar/Ruko">4. Toko/Apotik/Pasar/Ruko</option>
+                    <option value="5. Rumah Sakit/Klinik">5. Rumah Sakit/Klinik</option>
+                    <option value="6. Olahraga/Rekreasi">6. Olahraga/Rekreasi</option>
+                    <option value="7. Hotel/Wisma">7. Hotel/Wisma</option>
+                    <option value="8. Bengkel/Gudang/Pertanian">8. Bengkel/Gudang/Pertanian</option>
+                    <option value="9. Gedung Pemerintahan">9. Gedung Pemerintahan</option>
+                    <option value="10. Lain-lain">10. Lain-lain</option>
+                    <option value="11. Bgn Tidak Kena Pajak">11. Bgn Tidak Kena Pajak</option>
+                    <option value="12. Bangunan Parkir">12. Bangunan Parkir</option>
+                    <option value="13. Apartemen">13. Apartemen</option>
+                    <option value="14. Pompa Bensin">14. Pompa Bensin</option>
+                    <option value="15. Tangki Minyak">15. Tangki Minyak</option>
+                    <option value="16. Gedung Sekolah">16. Gedung Sekolah</option>
+                </select>
+            </div>
+            <div class="form-col form-group">
+                <label for="jumlah_lantai">Jumlah Lantai</label>
+                <input type="number" id="jumlah_lantai" name="jumlah_lantai" placeholder="0">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-col form-group">
+                <label for="tahun_dibangun">Tahun Dibangun</label>
+                <input type="number" id="tahun_dibangun" name="tahun_dibangun" placeholder="YYYY">
+            </div>
+            <div class="form-col form-group">
+                <label for="tahun_direnovasi">Tahun Direnovasi</label>
+                <input type="number" id="tahun_direnovasi" name="tahun_direnovasi" placeholder="YYYY">
+            </div>
+            <div class="form-col form-group">
+                <label for="daya_listrik">Daya Listrik Terpasang (Watt)</label>
+                <input type="number" id="daya_listrik" name="daya_listrik" placeholder="0">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-col form-group">
+                <label for="kondisi_pada_umumnya">Kondisi Pada Umumnya</label>
+                <select id="kondisi_pada_umumnya" name="kondisi_pada_umumnya">
+                    <option value="">-- Pilih Kondisi --</option>
+                    <option value="1. Sangat Baik">1. Sangat Baik</option>
+                    <option value="2. Baik">2. Baik</option>
+                    <option value="3. Sedang">3. Sedang</option>
+                    <option value="4. Jelek">4. Jelek</option>
+                </select>
+            </div>
+            <div class="form-col form-group">
+                <label for="konstruksi">Konstruksi</label>
+                <select id="konstruksi" name="konstruksi">
+                    <option value="">-- Pilih Konstruksi --</option>
+                    <option value="1. Baja">1. Baja</option>
+                    <option value="2. Beton">2. Beton</option>
+                    <option value="3. Batu Bata">3. Batu Bata</option>
+                    <option value="4. Kayu">4. Kayu</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-col form-group">
+                <label for="atap">Atap</label>
+                <select id="atap" name="atap">
+                    <option value="">-- Pilih Atap --</option>
+                    <option value="1. Decarbon/Beton/Gtg Glazur">1. Decarbon/Beton/Gtg Glazur</option>
+                    <option value="2. Gtg Beton/Aluminium">2. Gtg Beton/Aluminium</option>
+                    <option value="3. Gtg Biasa/Sirap">3. Gtg Biasa/Sirap</option>
+                    <option value="4. Asbes">4. Asbes</option>
+                    <option value="5. Seng">5. Seng</option>
+                </select>
+            </div>
+            <div class="form-col form-group">
+                <label for="dinding">Dinding</label>
+                <select id="dinding" name="dinding">
+                    <option value="">-- Pilih Dinding --</option>
+                    <option value="1. Kaca/Aluminium">1. Kaca/Aluminium</option>
+                    <option value="2. Beton">2. Beton</option>
+                    <option value="3. Batu Bata/Conblok">3. Batu Bata/Conblok</option>
+                    <option value="4. Kayu">4. Kayu</option>
+                    <option value="5. Seng">5. Seng</option>
+                    <option value="6. Tidak Ada">6. Tidak Ada</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-col form-group">
+                <label for="lantai">Lantai</label>
+                <select id="lantai" name="lantai">
+                    <option value="">-- Pilih Lantai --</option>
+                    <option value="1. Marmer">1. Marmer</option>
+                    <option value="2. Keramik">2. Keramik</option>
+                    <option value="3. Teraso">3. Teraso</option>
+                    <option value="4. Ubin PC/Papan">4. Ubin PC/Papan</option>
+                    <option value="5. Semen">5. Semen</option>
+                </select>
+            </div>
+            <div class="form-col form-group">
+                <label for="langit_langit">Langit-langit</label>
+                <select id="langit_langit" name="langit_langit">
+                    <option value="">-- Pilih Langit-langit --</option>
+                    <option value="1. Akustik/Jati">1. Akustik/Jati</option>
+                    <option value="2. Triplex/Asbes/Bambu">2. Triplex/Asbes/Bambu</option>
+                    <option value="3. Tidak Ada">3. Tidak Ada</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="section-title" style="color: #1976D2; border-bottom-color: #1976D2; font-size: 1rem;">Fasilitas Bangunan</div>
+        
+        <div class="form-row">
+            <div class="form-col form-group">
+                <label for="jumlah_ac_split">Jumlah AC Split</label>
+                <input type="number" id="jumlah_ac_split" name="jumlah_ac_split" placeholder="0">
+            </div>
+            <div class="form-col form-group">
+                <label for="jumlah_ac_window">Jumlah AC Window</label>
+                <input type="number" id="jumlah_ac_window" name="jumlah_ac_window" placeholder="0">
+            </div>
+            <div class="form-col form-group">
+                <label for="ac_sentral">AC Sentral</label>
+                <select id="ac_sentral" name="ac_sentral">
+                    <option value="">-- Pilih --</option>
+                    <option value="1. Ada">1. Ada</option>
+                    <option value="2. Tidak Ada">2. Tidak Ada</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-col form-group">
+                <label for="luas_kolam_renang">Luas Kolam Renang (m²)</label>
+                <input type="number" step="0.01" id="luas_kolam_renang" name="luas_kolam_renang" placeholder="0.00">
+            </div>
+            <div class="form-col form-group">
+                <label for="kolam_renang_tipe">Tipe Kolam Renang</label>
+                <select id="kolam_renang_tipe" name="kolam_renang_tipe">
+                    <option value="">-- Pilih Tipe --</option>
+                    <option value="1. Diplester">1. Diplester</option>
+                    <option value="2. Dengan Pelapis">2. Dengan Pelapis</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Luas Perkerasan Halaman (m²)</label>
+            <div class="form-row">
+                <div class="form-col"><input type="number" step="0.01" name="luas_perkerasan_halaman_ringan" placeholder="Ringan"></div>
+                <div class="form-col"><input type="number" step="0.01" name="luas_perkerasan_halaman_sedang" placeholder="Sedang"></div>
+                <div class="form-col"><input type="number" step="0.01" name="luas_perkerasan_halaman_berat" placeholder="Berat"></div>
+                <div class="form-col"><input type="number" step="0.01" name="luas_perkerasan_halaman_dgn_penutup" placeholder="Dgn Penutup Lantai"></div>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-col form-group">
+                <label for="jumlah_lift_penumpang">Jumlah Lift Penumpang</label>
+                <input type="number" id="jumlah_lift_penumpang" name="jumlah_lift_penumpang" placeholder="0">
+            </div>
+            <div class="form-col form-group">
+                <label for="jumlah_lift_kapsul">Jumlah Lift Kapsul</label>
+                <input type="number" id="jumlah_lift_kapsul" name="jumlah_lift_kapsul" placeholder="0">
+            </div>
+            <div class="form-col form-group">
+                <label for="jumlah_lift_barang">Jumlah Lift Barang</label>
+                <input type="number" id="jumlah_lift_barang" name="jumlah_lift_barang" placeholder="0">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-col form-group">
+                <label for="jumlah_tangga_berjalan_kurang">Tangga Berjalan Lebar &lt;= 0,80 m</label>
+                <input type="number" id="jumlah_tangga_berjalan_kurang" name="jumlah_tangga_berjalan_kurang" placeholder="0">
+            </div>
+            <div class="form-col form-group">
+                <label for="jumlah_tangga_berjalan_lebih">Tangga Berjalan Lebar &gt; 0,80 m</label>
+                <input type="number" id="jumlah_tangga_berjalan_lebih" name="jumlah_tangga_berjalan_lebih" placeholder="0">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-col form-group">
+                <label for="panjang_pagar">Panjang Pagar (m)</label>
+                <input type="number" step="0.01" id="panjang_pagar" name="panjang_pagar" placeholder="0">
+            </div>
+            <div class="form-col form-group">
+                <label for="bahan_pagar">Bahan Pagar</label>
+                <select id="bahan_pagar" name="bahan_pagar">
+                    <option value="">-- Pilih Bahan --</option>
+                    <option value="Baja/Besi">1. Baja/Besi</option>
+                    <option value="Bata/Beton">2. Bata/Batako/Beton</option>
+                    <option value="Bata">2. Bata/Batako/Beton</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-col form-group">
+                <label for="pemadam_hydrant">Pemadam Kebakaran - Hydrant</label>
+                <select id="pemadam_hydrant" name="pemadam_hydrant">
+                    <option value="">-- Pilih --</option>
+                    <option value="1. Ada">1. Ada</option>
+                    <option value="2. Tidak Ada">2. Tidak Ada</option>
+                </select>
+            </div>
+            <div class="form-col form-group">
+                <label for="pemadam_sprinkler">Pemadam Kebakaran - Sprinkler</label>
+                <select id="pemadam_sprinkler" name="pemadam_sprinkler">
+                    <option value="">-- Pilih --</option>
+                    <option value="1. Ada">1. Ada</option>
+                    <option value="2. Tidak Ada">2. Tidak Ada</option>
+                </select>
+            </div>
+            <div class="form-col form-group">
+                <label for="pemadam_fire_alarm">Pemadam Kebakaran - Fire Alarm</label>
+                <select id="pemadam_fire_alarm" name="pemadam_fire_alarm">
+                    <option value="">-- Pilih --</option>
+                    <option value="1. Ada">1. Ada</option>
+                    <option value="2. Tidak Ada">2. Tidak Ada</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-col form-group">
+                <label for="jumlah_saluran_pes_pabx">Jumlah Saluran PES/PABX</label>
+                <input type="number" id="jumlah_saluran_pes_pabx" name="jumlah_saluran_pes_pabx" placeholder="0">
+            </div>
+            <div class="form-col form-group">
+                <label for="kedalaman_sumur_artesis">Kedalaman Sumur Artesis (m)</label>
+                <input type="number" step="0.01" id="kedalaman_sumur_artesis" name="kedalaman_sumur_artesis" placeholder="0">
+            </div>
+        </div>
+
+        <button type="submit" class="btn-submit">Simpan SPOP</button>
+    </form>
+</div>
+
+<script>
+    document.getElementById('jsonUpload').addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+                let filledCount = 0;
+                
+                for (const key in data) {
+                    if (data.hasOwnProperty(key)) {
+                        const element = document.getElementById(key) || document.getElementsByName(key)[0];
+                        if (element && key !== 'nop' && key !== 'region_type' && key !== 'kabupaten_op') {
+                            element.value = data[key];
+                            filledCount++;
+                        } else if (key === 'nop' && element) {
+                            // Untuk NOP, potong 4 digit pertama dari JSON karena inputan user hanya butuh sisa 14 digit
+                            const nopVal = data[key].toString();
+                            if (nopVal.startsWith('{{ region_prefix }}')) {
+                                element.value = nopVal.substring(4);
+                                filledCount++;
+                            } else {
+                                alert(`Peringatan: NOP dalam file JSON (${nopVal}) tidak sesuai dengan daerah ini (Harusnya berawalan {{ region_prefix }}). NOP diabaikan.`);
+                            }
+                        }
+                    }
+                }
+                
+                if(filledCount > 0) {
+                    alert(`Berhasil mengisi ${filledCount} field secara otomatis!`);
+                } else {
+                    alert('Tidak ada field yang cocok dengan data JSON.');
+                }
+            } catch (err) {
+                alert('Gagal membaca file JSON. Pastikan formatnya benar.');
+                console.error(err);
+            }
+            
+            // Reset input file agar bisa upload file yang sama lagi jika perlu
+            event.target.value = '';
+        };
+        reader.readAsText(file);
+    });
+</script>
+
+</body>
+</html>
