@@ -49,7 +49,7 @@
         .cells span {
             width: 100%;
             text-align: center;
-            transform: translateY(var(--dy, 2px));
+            transform: translateY(var(--dy, 2px)) scaleX(var(--sx, 1));
         }
         .mark {
             position: absolute;
@@ -105,9 +105,9 @@
     </style>
 </head>
 <body>
-{% macro cells(value, x, y, w, count, h=24, size=18, gap=0, dy=2) -%}
+{% macro cells(value, x, y, w, count, h=24, size=18, gap=0, dy=2, sx=1) -%}
     {%- set text = ((value or '') ~ '')[:count].ljust(count) -%}
-    <div class="cells" style="left: {{ x }}px; top: {{ y }}px; width: {{ w }}px; height: {{ h }}px; --count: {{ count }}; --gap: {{ gap }}px; --dy: {{ dy }}px; font-size: {{ size }}px;">
+    <div class="cells" style="left: {{ x }}px; top: {{ y }}px; width: {{ w }}px; height: {{ h }}px; --count: {{ count }}; --gap: {{ gap }}px; --dy: {{ dy }}px; --sx: {{ sx }}; font-size: {{ size }}px;">
         {%- for i in range(count) -%}<span>{{ text[i] }}</span>{%- endfor -%}
     </div>
 {%- endmacro %}
@@ -127,8 +127,8 @@
     {{ cells(n[17:18], first_x + 600, y, 28, 1) }}
 {%- endmacro %}
 
-{% macro text_row(value, x, y, w, count, size=18, gap=0, dy=2) -%}
-    {{ cells((value or '').upper(), x, y, w, count, 24, size, gap, dy) }}
+{% macro text_row(value, x, y, w, count, size=18, gap=0, dy=2, sx=1) -%}
+    {{ cells((value or '').upper(), x, y, w, count, 24, size, gap, dy, sx) }}
 {%- endmacro %}
 
 {% macro date_cells(date_value, x, y) -%}
@@ -155,12 +155,12 @@
     {{ nop_boxes(data.nop_asal, 491) }}
     {{ cells(digits_only(data.no_sppt_lama), 299, 532, 127, 5) }}
 
-    {{ text_row(data.jalan_op, 50, 675, 774, 30, 13, 2, 2) }}
-    {{ text_row((data.jalan_op or '')[30:], 50, 702, 774, 30, 13, 2, 2) }}
-    {{ text_row(data.blok_kav_no_op, 846, 675, 303, 12, 13, 2, 2) }}
-    {{ text_row(data.kelurahan_op, 50, 764, 650, 25, 13, 2, 2) }}
-    {{ cells(op_parts[1], 846, 764, 56, 2, 24, 13, 1, 2) }}
-    {{ cells(op_parts[0], 949, 764, 77, 3, 24, 13, 1, 2) }}
+    {{ text_row(data.jalan_op, 50, 675, 774, 30, 13, 0, 2, 0.68) }}
+    {{ text_row((data.jalan_op or '')[30:], 50, 702, 774, 30, 13, 0, 2, 0.68) }}
+    {{ text_row(data.blok_kav_no_op, 846, 675, 303, 12, 13, 0, 2, 0.68) }}
+    {{ text_row(data.kelurahan_op, 50, 764, 650, 25, 13, 0, 2, 0.68) }}
+    {{ cells(op_parts[1], 846, 764, 56, 2, 24, 13, 0, 2, 0.68) }}
+    {{ cells(op_parts[0], 949, 764, 77, 3, 24, 13, 0, 2, 0.68) }}
 
     {{ mark(data.status_wp, 1, 223, 886) }}
     {{ mark(data.status_wp, 2, 398, 886) }}
@@ -173,17 +173,17 @@
     {{ mark(data.pekerjaan_wp, 4, 821, 927) }}
     {{ mark(data.pekerjaan_wp, 5, 998, 927) }}
 
-    {{ text_row(data.nama_wp, 50, 1010, 799, 31, 13, 2, 2) }}
-    {{ text_row((data.nama_wp or '')[31:], 50, 1036, 799, 31, 13, 2, 2) }}
-    {{ cells(digits_only(data.npwp_wp), 870, 1010, 305, 15, 23, 12, 2, 2) }}
-    {{ text_row(data.jalan_wp, 50, 1098, 774, 30, 13, 2, 2) }}
-    {{ text_row((data.jalan_wp or '')[30:], 50, 1127, 774, 30, 13, 2, 2) }}
-    {{ text_row(data.blok_kav_no_wp, 846, 1098, 303, 12, 13, 2, 2) }}
-    {{ text_row(data.kelurahan_wp, 50, 1189, 650, 25, 13, 2, 2) }}
-    {{ cells(wp_parts[1], 846, 1189, 56, 2, 24, 13, 1, 2) }}
-    {{ cells(wp_parts[0], 949, 1189, 77, 3, 24, 13, 1, 2) }}
-    {{ text_row(data.kabupaten_wp, 50, 1251, 650, 25, 13, 2, 2) }}
-    {{ cells(digits_only(data.no_ktp_wp), 50, 1313, 650, 25, 24, 12, 2, 2) }}
+    {{ text_row(data.nama_wp, 50, 1010, 799, 31, 13, 0, 2, 0.68) }}
+    {{ text_row((data.nama_wp or '')[31:], 50, 1036, 799, 31, 13, 0, 2, 0.68) }}
+    {{ cells(digits_only(data.npwp_wp), 870, 1010, 305, 15, 23, 12, 0, 2, 0.62) }}
+    {{ text_row(data.jalan_wp, 50, 1098, 774, 30, 13, 0, 2, 0.68) }}
+    {{ text_row((data.jalan_wp or '')[30:], 50, 1127, 774, 30, 13, 0, 2, 0.68) }}
+    {{ text_row(data.blok_kav_no_wp, 846, 1098, 303, 12, 13, 0, 2, 0.68) }}
+    {{ text_row(data.kelurahan_wp, 50, 1189, 650, 25, 13, 0, 2, 0.68) }}
+    {{ cells(wp_parts[1], 846, 1189, 56, 2, 24, 13, 0, 2, 0.68) }}
+    {{ cells(wp_parts[0], 949, 1189, 77, 3, 24, 13, 0, 2, 0.68) }}
+    {{ text_row(data.kabupaten_wp, 50, 1251, 650, 25, 13, 0, 2, 0.68) }}
+    {{ cells(digits_only(data.no_ktp_wp), 50, 1313, 650, 25, 24, 12, 0, 2, 0.62) }}
 
     {{ cells(whole_number(data.luas_bumi, 6), 198, 1437, 277, 11) }}
     {{ text_row(data.kelas_zona_bumi, 1097, 1437, 53, 2) }}
