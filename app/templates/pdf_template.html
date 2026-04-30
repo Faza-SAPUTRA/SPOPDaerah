@@ -48,7 +48,7 @@
         .cells span {
             width: 100%;
             text-align: center;
-            transform: translateY(2px);
+            transform: translateY(4px);
         }
         .mark {
             position: absolute;
@@ -133,7 +133,7 @@
 {% macro date_cells(date_value, x, y) -%}
     {{ cells(date_value.strftime('%d'), x, y, 51, 2) }}
     {{ cells(date_value.strftime('%m'), x + 77, y, 51, 2) }}
-    {{ cells(date_value.strftime('%Y'), x + 153, y, 102, 4) }}
+    {{ cells(date_value.strftime('%y'), x + 153, y, 51, 2) }}
 {%- endmacro %}
 
 {% set img_pfx = 'tangsel' if kop_type == 'tangsel' else 'kab' %}
@@ -198,8 +198,8 @@
 
     {{ cells(whole_number(data.jumlah_bangunan, 3), 248, 99, 79, 3) }}
 
-    <div class="sign" style="left: 210px; top: 325px; width: 220px; text-align: center;">{{ (data.nama_wp or '').upper() }}</div>
-    <div class="sign" style="left: 520px; top: 325px; width: 250px; text-align: center;">{{ data.created_at.strftime('%d-%m-%Y') }}</div>
+    <div class="sign" style="left: 210px; top: 300px; width: 220px; text-align: center;">{{ (data.nama_wp or '').upper() }}</div>
+    <div class="sign" style="left: 520px; top: 300px; width: 250px; text-align: center;">{{ data.created_at.strftime('%d-%m-%y') }}</div>
 
     {{ date_cells(data.created_at, 272, 514) }}
     {{ date_cells(data.created_at, 870, 514) }}
