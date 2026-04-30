@@ -48,7 +48,7 @@
         .cells span {
             width: 100%;
             text-align: center;
-            transform: translateY(4px);
+            transform: translateY(0);
         }
         .mark {
             position: absolute;
@@ -126,8 +126,8 @@
     {{ cells(n[17:18], first_x + 600, y, 28, 1) }}
 {%- endmacro %}
 
-{% macro text_row(value, x, y, w, count) -%}
-    {{ cells((value or '').upper(), x, y, w, count) }}
+{% macro text_row(value, x, y, w, count, size=18) -%}
+    {{ cells((value or '').upper(), x, y, w, count, 24, size) }}
 {%- endmacro %}
 
 {% macro date_cells(date_value, x, y) -%}
@@ -172,17 +172,17 @@
     {{ mark(data.pekerjaan_wp, 4, 821, 927) }}
     {{ mark(data.pekerjaan_wp, 5, 998, 927) }}
 
-    {{ text_row(data.nama_wp, 50, 1014, 799, 31) }}
-    {{ text_row((data.nama_wp or '')[31:], 50, 1040, 799, 31) }}
-    {{ cells(digits_only(data.npwp_wp), 870, 1014, 305, 15, 23, 16) }}
-    {{ text_row(data.jalan_wp, 50, 1102, 774, 30) }}
-    {{ text_row((data.jalan_wp or '')[30:], 50, 1131, 774, 30) }}
-    {{ text_row(data.blok_kav_no_wp, 846, 1102, 303, 12) }}
-    {{ text_row(data.kelurahan_wp, 50, 1193, 650, 25) }}
-    {{ cells(wp_parts[1], 846, 1193, 56, 2) }}
-    {{ cells(wp_parts[0], 949, 1193, 77, 3) }}
-    {{ text_row(data.kabupaten_wp, 50, 1255, 650, 25) }}
-    {{ cells(digits_only(data.no_ktp_wp), 50, 1317, 650, 25) }}
+    {{ text_row(data.nama_wp, 50, 1008, 799, 31, 16) }}
+    {{ text_row((data.nama_wp or '')[31:], 50, 1034, 799, 31, 16) }}
+    {{ cells(digits_only(data.npwp_wp), 870, 1008, 305, 15, 23, 15) }}
+    {{ text_row(data.jalan_wp, 50, 1096, 774, 30, 16) }}
+    {{ text_row((data.jalan_wp or '')[30:], 50, 1125, 774, 30, 16) }}
+    {{ text_row(data.blok_kav_no_wp, 846, 1096, 303, 12, 16) }}
+    {{ text_row(data.kelurahan_wp, 50, 1187, 650, 25, 16) }}
+    {{ cells(wp_parts[1], 846, 1187, 56, 2, 24, 15) }}
+    {{ cells(wp_parts[0], 949, 1187, 77, 3, 24, 15) }}
+    {{ text_row(data.kabupaten_wp, 50, 1249, 650, 25, 16) }}
+    {{ cells(digits_only(data.no_ktp_wp), 50, 1311, 650, 25, 24, 15) }}
 
     {{ cells(whole_number(data.luas_bumi, 6), 198, 1437, 277, 11) }}
     {{ text_row(data.kelas_zona_bumi, 1097, 1437, 53, 2) }}
