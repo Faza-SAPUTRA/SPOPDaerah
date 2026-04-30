@@ -154,12 +154,12 @@
     {{ nop_boxes(data.nop_asal, 491) }}
     {{ cells(digits_only(data.no_sppt_lama), 299, 532, 127, 5) }}
 
-    {{ text_row(data.jalan_op, 50, 675, 774, 30) }}
-    {{ text_row((data.jalan_op or '')[30:], 50, 702, 774, 30) }}
-    {{ text_row(data.blok_kav_no_op, 846, 675, 303, 12) }}
-    {{ text_row(data.kelurahan_op, 50, 764, 650, 25) }}
-    {{ cells(op_parts[1], 846, 764, 56, 2) }}
-    {{ cells(op_parts[0], 949, 764, 77, 3) }}
+    {{ text_row(data.jalan_op, 50, 671, 774, 30, 14) }}
+    {{ text_row((data.jalan_op or '')[30:], 50, 698, 774, 30, 14) }}
+    {{ text_row(data.blok_kav_no_op, 846, 671, 303, 12, 14) }}
+    {{ text_row(data.kelurahan_op, 50, 760, 650, 25, 14) }}
+    {{ cells(op_parts[1], 846, 760, 56, 2, 24, 14) }}
+    {{ cells(op_parts[0], 949, 760, 77, 3, 24, 14) }}
 
     {{ mark(data.status_wp, 1, 223, 886) }}
     {{ mark(data.status_wp, 2, 398, 886) }}
@@ -172,17 +172,17 @@
     {{ mark(data.pekerjaan_wp, 4, 821, 927) }}
     {{ mark(data.pekerjaan_wp, 5, 998, 927) }}
 
-    {{ text_row(data.nama_wp, 50, 1008, 799, 31, 16) }}
-    {{ text_row((data.nama_wp or '')[31:], 50, 1034, 799, 31, 16) }}
-    {{ cells(digits_only(data.npwp_wp), 870, 1008, 305, 15, 23, 15) }}
-    {{ text_row(data.jalan_wp, 50, 1096, 774, 30, 16) }}
-    {{ text_row((data.jalan_wp or '')[30:], 50, 1125, 774, 30, 16) }}
-    {{ text_row(data.blok_kav_no_wp, 846, 1096, 303, 12, 16) }}
-    {{ text_row(data.kelurahan_wp, 50, 1187, 650, 25, 16) }}
-    {{ cells(wp_parts[1], 846, 1187, 56, 2, 24, 15) }}
-    {{ cells(wp_parts[0], 949, 1187, 77, 3, 24, 15) }}
-    {{ text_row(data.kabupaten_wp, 50, 1249, 650, 25, 16) }}
-    {{ cells(digits_only(data.no_ktp_wp), 50, 1311, 650, 25, 24, 15) }}
+    {{ text_row(data.nama_wp, 50, 1005, 799, 31, 14) }}
+    {{ text_row((data.nama_wp or '')[31:], 50, 1031, 799, 31, 14) }}
+    {{ cells(digits_only(data.npwp_wp), 870, 1005, 305, 15, 23, 13) }}
+    {{ text_row(data.jalan_wp, 50, 1093, 774, 30, 14) }}
+    {{ text_row((data.jalan_wp or '')[30:], 50, 1122, 774, 30, 14) }}
+    {{ text_row(data.blok_kav_no_wp, 846, 1093, 303, 12, 14) }}
+    {{ text_row(data.kelurahan_wp, 50, 1184, 650, 25, 14) }}
+    {{ cells(wp_parts[1], 846, 1184, 56, 2, 24, 14) }}
+    {{ cells(wp_parts[0], 949, 1184, 77, 3, 24, 14) }}
+    {{ text_row(data.kabupaten_wp, 50, 1246, 650, 25, 14) }}
+    {{ cells(digits_only(data.no_ktp_wp), 50, 1308, 650, 25, 24, 13) }}
 
     {{ cells(whole_number(data.luas_bumi, 6), 198, 1437, 277, 11) }}
     {{ text_row(data.kelas_zona_bumi, 1097, 1437, 53, 2) }}
