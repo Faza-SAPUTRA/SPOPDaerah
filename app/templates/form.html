@@ -154,6 +154,65 @@
             color: var(--text-muted);
             margin-top: 0.25rem;
         }
+        .wizard-progress {
+            display: flex;
+            gap: 0.75rem;
+            overflow-x: auto;
+            padding-bottom: 0.75rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .step-pill {
+            border: 1px solid var(--border);
+            background: #fff;
+            color: var(--text-muted);
+            border-radius: 999px;
+            padding: 0.55rem 0.9rem;
+            font: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+        .step-pill.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
+        }
+        .wizard-step { display: none; }
+        .wizard-step.active { display: block; }
+        .wizard-actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+        .btn-secondary {
+            padding: 1rem 1.2rem;
+            background: #fff;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+            border-radius: var(--radius);
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .btn-secondary:disabled {
+            opacity: .45;
+            cursor: not-allowed;
+        }
+        .wizard-actions .btn-submit {
+            width: auto;
+            min-width: 180px;
+            margin-top: 0;
+            padding: 1rem 1.2rem;
+        }
+        @media (max-width: 640px) {
+            .wizard-actions { flex-direction: column; }
+            .wizard-actions .btn-submit, .btn-secondary { width: 100%; }
+        }
     </style>
 </head>
 <body>
@@ -181,7 +240,8 @@
       {% endif %}
     {% endwith %}
 
-    <form class="form-card" action="/submit" method="POST">
+    <form class="form-card" action="/submit" method="POST" id="spopWizardForm">
+        <div class="wizard-progress" id="wizardProgress" aria-label="Tahapan formulir"></div>
         
         <div class="section-title">Data Utama</div>
         <div class="form-row">
@@ -605,11 +665,75 @@
             </div>
         </div>
 
-        <button type="submit" class="btn-submit">Simpan SPOP</button>
+        <div class="wizard-actions">
+            <button type="button" class="btn-secondary" id="prevStep">Sebelumnya</button>
+            <button type="button" class="btn-secondary" id="nextStep">Lanjut</button>
+            <button type="submit" class="btn-submit" id="submitStep">Simpan SPOP</button>
+        </div>
     </form>
 </div>
 
 <script>
+    (function initWizard() {
+        const form = document.getElementById('spopWizardForm');
+        const progress = document.getElementById('wizardProgress');
+        const prevBtn = document.getElementById('prevStep');
+        const nextBtn = document.getElementById('nextStep');
+        const submitBtn = document.getElementById('submitStep');
+        const actions = form.querySelector('.wizard-actions');
+        const titles = Array.from(form.querySelectorAll('.section-title'));
+        const steps = [];
+
+        titles.forEach((title, index) => {
+            const step = document.createElement('section');
+            step.className = 'wizard-step';
+            step.dataset.stepIndex = index;
+            form.insertBefore(step, title);
+            step.appendChild(title);
+
+            let node = step.nextSibling;
+            while (node && node !== actions && !(node.nodeType === 1 && node.classList.contains('section-title'))) {
+                const next = node.nextSibling;
+                step.appendChild(node);
+                node = next;
+            }
+            steps.push(step);
+
+            const pill = document.createElement('button');
+            pill.type = 'button';
+            pill.className = 'step-pill';
+            pill.textContent = title.textContent.trim();
+            pill.addEventListener('click', () => showStep(index));
+            progress.appendChild(pill);
+        });
+
+        let current = 0;
+        function validateCurrentStep() {
+            const requiredFields = Array.from(steps[current].querySelectorAll('[required]'));
+            for (const field of requiredFields) {
+                if (!field.checkValidity()) {
+                    field.reportValidity();
+                    return false;
+                }
+            }
+            return true;
+        }
+        function showStep(index) {
+            current = Math.max(0, Math.min(index, steps.length - 1));
+            steps.forEach((step, i) => step.classList.toggle('active', i === current));
+            Array.from(progress.children).forEach((pill, i) => pill.classList.toggle('active', i === current));
+            prevBtn.disabled = current === 0;
+            nextBtn.style.display = current === steps.length - 1 ? 'none' : 'inline-flex';
+            submitBtn.style.display = current === steps.length - 1 ? 'inline-flex' : 'none';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        prevBtn.addEventListener('click', () => showStep(current - 1));
+        nextBtn.addEventListener('click', () => {
+            if (validateCurrentStep()) showStep(current + 1);
+        });
+        showStep(0);
+    })();
+
     document.getElementById('jsonUpload').addEventListener('change', function(event) {
         const file = event.target.files[0];
         if (!file) return;

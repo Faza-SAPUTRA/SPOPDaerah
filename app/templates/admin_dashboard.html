@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - SPOP</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #A81E2A;
+            --primary-hover: #8C1822;
+            --bg: #F8F9FA;
+            --card: #FFFFFF;
+            --text: #2F3437;
+            --muted: #6C757D;
+            --border: #E1E5E8;
+            --radius: 8px;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: Inter, Arial, sans-serif;
+        }
+        .topbar {
+            height: 68px;
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 28px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .brand { font-weight: 800; color: var(--primary); font-size: 22px; }
+        .nav-actions { display: flex; gap: 10px; align-items: center; }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: 38px;
+            padding: 0 14px;
+            border-radius: var(--radius);
+            border: 1px solid var(--primary);
+            background: var(--primary);
+            color: #fff;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .btn:hover { background: var(--primary-hover); }
+        .btn.secondary {
+            background: #fff;
+            color: var(--primary);
+        }
+        .shell { max-width: 1180px; margin: 0 auto; padding: 28px; }
+        .title-row {
+            display: flex;
+            align-items: end;
+            justify-content: space-between;
+            gap: 18px;
+            margin-bottom: 22px;
+        }
+        h1 { margin: 0 0 6px; font-size: 30px; }
+        .subtitle { margin: 0; color: var(--muted); }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+            margin-bottom: 22px;
+        }
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px;
+        }
+        .stat-value { font-size: 30px; font-weight: 800; color: var(--primary); }
+        .stat-label { color: var(--muted); margin-top: 4px; }
+        .panel {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+        .panel-head {
+            padding: 18px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: center;
+        }
+        .panel-head h2 { margin: 0; font-size: 18px; }
+        .table-wrap { overflow-x: auto; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 980px;
+        }
+        th, td {
+            padding: 13px 14px;
+            border-bottom: 1px solid var(--border);
+            text-align: left;
+            font-size: 14px;
+            vertical-align: middle;
+        }
+        th {
+            color: var(--muted);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            background: #FBFBFC;
+        }
+        .region-pill {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 999px;
+            background: #FCECEE;
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 12px;
+        }
+        .row-actions { display: flex; gap: 8px; }
+        .row-actions .btn { height: 32px; padding: 0 10px; font-size: 12px; }
+        .empty {
+            padding: 36px;
+            text-align: center;
+            color: var(--muted);
+        }
+        @media (max-width: 780px) {
+            .topbar { padding: 0 16px; }
+            .shell { padding: 18px; }
+            .stats { grid-template-columns: 1fr; }
+            .title-row, .panel-head { align-items: stretch; flex-direction: column; }
+            .nav-actions { gap: 6px; }
+        }
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <div class="brand">SPOP Admin</div>
+        <div class="nav-actions">
+            <a class="btn secondary" href="/">Portal Guest</a>
+            <a class="btn secondary" href="/admin/logout">Logout</a>
+        </div>
+    </header>
+    <main class="shell">
+        <section class="title-row">
+            <div>
+                <h1>Dashboard Data SPOP</h1>
+                <p class="subtitle">Pantau data masuk, cetak formulir, dan ekspor Excel.</p>
+            </div>
+            <a class="btn" href="/admin/export">Export Semua Excel</a>
+        </section>
+        <section class="stats">
+            <div class="stat-card">
+                <div class="stat-value">{{ total }}</div>
+                <div class="stat-label">Total Data</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ tangsel_count }}</div>
+                <div class="stat-label">Tangerang Selatan</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ kab_count }}</div>
+                <div class="stat-label">Kabupaten Tangerang</div>
+            </div>
+        </section>
+        <section class="panel">
+            <div class="panel-head">
+                <h2>Data Terbaru</h2>
+                <span class="subtitle">{{ total }} entry tersimpan</span>
+            </div>
+            {% if entries %}
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Tanggal</th>
+                            <th>Wilayah</th>
+                            <th>NOP</th>
+                            <th>Nama WP</th>
+                            <th>Alamat OP</th>
+                            <th>Luas Tanah</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in entries %}
+                        <tr>
+                            <td>{{ item.id }}</td>
+                            <td>{{ item.created_at.strftime('%d-%m-%Y') }}</td>
+                            <td><span class="region-pill">{{ 'Tangsel' if item.region_type == 'tangsel' else 'Kab Tangerang' }}</span></td>
+                            <td>{{ item.nop }}</td>
+                            <td>{{ item.nama_wp }}</td>
+                            <td>{{ item.jalan_op or '-' }}</td>
+                            <td>{{ whole_number(item.luas_bumi) or '0' }} m2</td>
+                            <td>
+                                <div class="row-actions">
+                                    <a class="btn secondary" href="/cetak/{{ item.id }}" target="_blank">Cetak</a>
+                                    <a class="btn secondary" href="/cetak/{{ item.id }}/pdf">PDF</a>
+                                    <a class="btn" href="/admin/export/{{ item.id }}">Excel</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty">Belum ada data masuk dari guest.</div>
+            {% endif %}
+        </section>
+    </main>
+</body>
+</html>

@@ -1,12 +1,15 @@
 import os
 import io
-from flask import Flask, render_template, request, redirect, url_for, send_file, flash, make_response
+from functools import wraps
+from flask import Flask, render_template, request, redirect, url_for, send_file, flash, make_response, session
 from sqlalchemy.exc import IntegrityError
 from models import db, SpopData
 import pandas as pd
 
 app = Flask(__name__)
-app.secret_key = 'super-secret-key-spop'
+app.secret_key = os.environ.get('SPOP_SECRET_KEY', 'super-secret-key-spop')
+ADMIN_USERNAME = os.environ.get('SPOP_ADMIN_USERNAME', 'admin')
+ADMIN_PASSWORD = os.environ.get('SPOP_ADMIN_PASSWORD', 'admin123')
 
 # Database config
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -209,6 +212,15 @@ app.jinja_env.globals.update(
 with app.app_context():
     db.create_all()
 
+def admin_required(view):
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if not session.get('admin_logged_in'):
+            flash("Silakan login sebagai admin terlebih dahulu.")
+            return redirect(url_for('admin_login'))
+        return view(*args, **kwargs)
+    return wrapped
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -331,6 +343,39 @@ def success(id):
     data = SpopData.query.get_or_404(id)
     return render_template('success.html', data=data)
 
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
+        if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+            session['admin_logged_in'] = True
+            session['admin_username'] = username
+            return redirect(url_for('admin_dashboard'))
+        flash("Username atau password admin salah.")
+    return render_template('admin_login.html')
+
+@app.route('/admin/logout')
+def admin_logout():
+    session.clear()
+    flash("Admin berhasil logout.")
+    return redirect(url_for('index'))
+
+@app.route('/admin')
+@admin_required
+def admin_dashboard():
+    entries = SpopData.query.order_by(SpopData.created_at.desc()).all()
+    total = len(entries)
+    tangsel_count = sum(1 for item in entries if item.region_type == 'tangsel')
+    kab_count = sum(1 for item in entries if item.region_type == 'kab_tangerang')
+    return render_template(
+        'admin_dashboard.html',
+        entries=entries,
+        total=total,
+        tangsel_count=tangsel_count,
+        kab_count=kab_count
+    )
+
 @app.route('/cetak/<int:id>', methods=['GET'])
 def cetak(id):
     data = SpopData.query.get_or_404(id)
@@ -350,6 +395,7 @@ def cetak_pdf(id):
     return response
 
 @app.route('/admin/export', methods=['GET'])
+@admin_required
 def export_excel():
     all_data = SpopData.query.all()
     data_list = [d.to_dict() for d in all_data]
@@ -365,6 +411,23 @@ def export_excel():
         excel_buffer,
         as_attachment=True,
         download_name='Export_Data_SPOP.xlsx',
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+
+@app.route('/admin/export/<int:id>', methods=['GET'])
+@admin_required
+def export_single_excel(id):
+    data = SpopData.query.get_or_404(id)
+    df = pd.DataFrame([data.to_dict()])
+    excel_buffer = io.BytesIO()
+    with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='Data_SPOP')
+    excel_buffer.seek(0)
+    safe_nop = digits_only(data.nop) or str(data.id)
+    return send_file(
+        excel_buffer,
+        as_attachment=True,
+        download_name=f'SPOP_{safe_nop}.xlsx',
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
 

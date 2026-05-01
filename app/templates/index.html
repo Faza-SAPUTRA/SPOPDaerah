@@ -80,9 +80,14 @@
             line-height: 1.5;
         }
         
-        /* Admin Button */
+        .guest-note {
+            margin-top: 2rem;
+            color: var(--text-muted);
+            font-size: .95rem;
+        }
         .admin-link {
-            margin-top: 4rem;
+            display: inline-block;
+            margin-top: 1.25rem;
             color: var(--text-muted);
             text-decoration: none;
             font-size: 0.9rem;
@@ -120,7 +125,8 @@
         </a>
     </div>
     
-    <a href="/admin/export" class="admin-link">📥 Download Semua Data (Excel)</a>
+    <p class="guest-note">Mode guest hanya untuk pengisian formulir. Pengelolaan data tersedia untuk admin.</p>
+    <a href="/admin/login" class="admin-link">Login Admin</a>
 </div>
 
 </body>
