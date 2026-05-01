@@ -137,6 +137,12 @@ def form_int(name):
     except (TypeError, ValueError):
         return 0
 
+def form_choice(name, default=''):
+    return clean_text(request.form.get(name)) or default
+
+def missing_required_fields(field_names):
+    return [field for field in field_names if not clean_text(request.form.get(field))]
+
 def ensure_extra_columns():
     columns = {
         row[1] for row in db.session.execute(text("PRAGMA table_info(spop_data)")).fetchall()
@@ -451,6 +457,16 @@ def submit():
         region_type = request.form.get('region_type')
         prefix = '3676' if region_type == 'tangsel' else '3719'
         full_nop = fixed_digits(prefix + request.form.get('nop', ''), 18, pad=True)
+        required_building_fields = [
+            'konstruksi',
+            'atap',
+            'dinding',
+            'lantai',
+            'langit_langit'
+        ]
+        if missing_required_fields(required_building_fields):
+            flash("Data Rincian Bangunan belum lengkap. Lengkapi Konstruksi, Atap, Dinding, Lantai, dan Langit-langit.")
+            return redirect(url_for('form', region_type=region_type or 'tangsel'))
         
         data = SpopData(
             region_type=region_type,
@@ -494,15 +510,15 @@ def submit():
             daya_listrik=form_int('daya_listrik'),
             
             kondisi_pada_umumnya=request.form.get('kondisi_pada_umumnya'),
-            konstruksi=request.form.get('konstruksi'),
-            atap=request.form.get('atap'),
-            dinding=request.form.get('dinding'),
-            lantai=request.form.get('lantai'),
-            langit_langit=request.form.get('langit_langit'),
+            konstruksi=form_choice('konstruksi'),
+            atap=form_choice('atap'),
+            dinding=form_choice('dinding'),
+            lantai=form_choice('lantai'),
+            langit_langit=form_choice('langit_langit'),
             
             jumlah_ac_split=form_int('jumlah_ac_split'),
             jumlah_ac_window=form_int('jumlah_ac_window'),
-            ac_sentral=request.form.get('ac_sentral'),
+            ac_sentral=form_choice('ac_sentral', '2. Tidak Ada'),
             luas_kolam_renang=form_float('luas_kolam_renang'),
             kolam_renang_tipe=request.form.get('kolam_renang_tipe'),
             
@@ -519,11 +535,11 @@ def submit():
             jumlah_tangga_berjalan_lebih=form_int('jumlah_tangga_berjalan_lebih'),
             
             panjang_pagar=form_float('panjang_pagar'),
-            bahan_pagar=request.form.get('bahan_pagar'),
+            bahan_pagar=form_choice('bahan_pagar'),
             
-            pemadam_hydrant=request.form.get('pemadam_hydrant'),
-            pemadam_sprinkler=request.form.get('pemadam_sprinkler'),
-            pemadam_fire_alarm=request.form.get('pemadam_fire_alarm'),
+            pemadam_hydrant=form_choice('pemadam_hydrant', '2. Tidak Ada'),
+            pemadam_sprinkler=form_choice('pemadam_sprinkler', '2. Tidak Ada'),
+            pemadam_fire_alarm=form_choice('pemadam_fire_alarm', '2. Tidak Ada'),
             
             jumlah_saluran_pes_pabx=form_int('jumlah_saluran_pes_pabx'),
             kedalaman_sumur_artesis=form_float('kedalaman_sumur_artesis'),
