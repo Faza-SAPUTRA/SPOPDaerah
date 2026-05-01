@@ -1,6 +1,7 @@
 import os
 import io
 from functools import wraps
+from types import SimpleNamespace
 from flask import Flask, render_template, request, redirect, url_for, send_file, flash, make_response, session
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import text
@@ -21,6 +22,54 @@ db.init_app(app)
 
 def digits_only(value):
     return ''.join(ch for ch in str(value or '') if ch.isdigit())
+
+def clean_text(value):
+    return ' '.join(str(value or '').split())
+
+def fixed_digits(value, length):
+    return digits_only(value)[:length]
+
+def split_fixed_text(value, first_count, second_count=0):
+    text = clean_text(value).upper()
+    first = text[:first_count]
+    second = text[first_count:first_count + second_count] if second_count else ''
+    return first, second
+
+def printable_data(data):
+    payload = {
+        column.name: getattr(data, column.name, '')
+        for column in SpopData.__table__.columns
+    }
+    digit_lengths = {
+        'nop': 18,
+        'nop_bersama': 18,
+        'nop_asal': 18,
+        'no_sppt_lama': 5,
+        'npwp_wp': 15,
+        'no_ktp_wp': 16
+    }
+    for field, length in digit_lengths.items():
+        payload[field] = fixed_digits(payload.get(field), length)
+    text_fields = [
+        'region_type', 'jenis_transaksi', 'status_wp', 'pekerjaan_wp', 'nama_wp',
+        'email_wp', 'jalan_wp', 'blok_kav_no_wp', 'rt_rw_wp', 'kelurahan_wp',
+        'kabupaten_wp', 'kodepos_wp', 'jalan_op', 'blok_kav_no_op', 'rt_rw_op',
+        'kelurahan_op', 'kabupaten_op', 'kelas_zona_bumi', 'jenis_tanah',
+        'longitude', 'latitude', 'jenis_penggunaan_bangunan', 'kondisi_pada_umumnya',
+        'konstruksi', 'atap', 'dinding', 'lantai', 'langit_langit', 'ac_sentral',
+        'kolam_renang_tipe', 'bahan_pagar', 'pemadam_hydrant', 'pemadam_sprinkler',
+        'pemadam_fire_alarm', 'kelas_bangunan_perkantoran', 'kelas_bangunan_toko',
+        'kelas_bangunan_rs', 'kelas_bangunan_olahraga', 'jenis_hotel',
+        'jumlah_bintang', 'tipe_bangunan_parkir', 'kelas_bangunan_apartemen',
+        'letak_tangki', 'kelas_bangunan_sekolah'
+    ]
+    for field in text_fields:
+        payload[field] = clean_text(payload.get(field))
+    payload['jalan_op_line1'], payload['jalan_op_line2'] = split_fixed_text(payload.get('jalan_op'), 30, 30)
+    payload['jalan_wp_line1'], payload['jalan_wp_line2'] = split_fixed_text(payload.get('jalan_wp'), 30, 30)
+    payload['nama_wp_line1'], payload['nama_wp_line2'] = split_fixed_text(payload.get('nama_wp'), 31, 31)
+    payload['created_at'] = data.created_at
+    return SimpleNamespace(**payload)
 
 def option_code(value):
     return str(value or '').split('.', 1)[0].strip()
@@ -126,7 +175,7 @@ def pdf_bytes_reportlab(data, kop_type):
         draw_cells(date_value.strftime('%y'), x + 153, y, 51, 2)
 
     def draw_nop(nop, y, first_x=299):
-        n = digits_only(nop).ljust(18)
+        n = fixed_digits(nop, 18).ljust(18)
         draw_cells(n[0:2], first_x, y, 53, 2)
         draw_cells(n[2:4], first_x + 74, y, 53, 2)
         draw_cells(n[4:7], first_x + 149, y, 77, 3)
@@ -146,8 +195,8 @@ def pdf_bytes_reportlab(data, kop_type):
     draw_nop(data.nop_bersama, 381)
     draw_nop(data.nop_asal, 491)
     draw_cells(digits_only(data.no_sppt_lama), 299, 532, 127, 5)
-    draw_text(data.jalan_op, 50, 675, 774, 30)
-    draw_text((data.jalan_op or '')[30:], 50, 702, 774, 30)
+    draw_text(data.jalan_op_line1, 50, 675, 774, 30)
+    draw_text(data.jalan_op_line2, 50, 702, 774, 30)
     draw_text(data.blok_kav_no_op, 846, 675, 303, 12)
     draw_text(data.kelurahan_op, 50, 764, 650, 25)
     draw_cells(op_rw, 846, 764, 56, 2)
@@ -162,11 +211,11 @@ def pdf_bytes_reportlab(data, kop_type):
     draw_mark(data.pekerjaan_wp, 3, 599, 927)
     draw_mark(data.pekerjaan_wp, 4, 821, 927)
     draw_mark(data.pekerjaan_wp, 5, 998, 927)
-    draw_text(data.nama_wp, 50, 1010, 799, 31)
-    draw_text((data.nama_wp or '')[31:], 50, 1036, 799, 31)
+    draw_text(data.nama_wp_line1, 50, 1010, 799, 31)
+    draw_text(data.nama_wp_line2, 50, 1036, 799, 31)
     draw_cells(digits_only(data.npwp_wp), 870, 1010, 305, 15, 23, 14)
-    draw_text(data.jalan_wp, 50, 1098, 774, 30)
-    draw_text((data.jalan_wp or '')[30:], 50, 1127, 774, 30)
+    draw_text(data.jalan_wp_line1, 50, 1098, 774, 30)
+    draw_text(data.jalan_wp_line2, 50, 1127, 774, 30)
     draw_text(data.blok_kav_no_wp, 846, 1098, 303, 12)
     draw_text(data.kelurahan_wp, 50, 1189, 650, 25)
     draw_cells(wp_rw, 846, 1189, 56, 2)
@@ -229,21 +278,17 @@ def pdf_bytes_reportlab(data, kop_type):
         pdf.showPage()
 
         bg(4)
-        c_values = [
-            data.tinggi_kolom, data.lebar_bentang, data.daya_dukung_lantai,
-            data.keliling_dinding, data.luas_mezzanine
-        ]
-        if any(value for value in c_values) or code in (3, 8):
+        if code in (3, 8):
             pdf.setFont('Helvetica-Bold', 20)
             pdf.drawCentredString(64, page_h - 108 - 19, 'X')
-        draw_cells(whole_number(data.tinggi_kolom), 272, 140, 55, 2)
-        draw_cells(whole_number(data.lebar_bentang), 698, 140, 52, 2)
-        draw_cells(whole_number(data.daya_dukung_lantai), 272, 171, 105, 4)
-        draw_cells(whole_number(data.keliling_dinding), 698, 171, 52, 2)
-        draw_cells(whole_number(data.luas_mezzanine), 1047, 171, 102, 4)
+            draw_cells(whole_number(data.tinggi_kolom), 272, 140, 55, 2)
+            draw_cells(whole_number(data.lebar_bentang), 698, 140, 52, 2)
+            draw_cells(whole_number(data.daya_dukung_lantai), 272, 171, 105, 4)
+            draw_cells(whole_number(data.keliling_dinding), 698, 171, 52, 2)
+            draw_cells(whole_number(data.luas_mezzanine), 1047, 171, 102, 4)
 
-        def draw_any_group(group_values, x, y, jpb_codes=()):
-            if any(value for value in group_values) or code in jpb_codes:
+        def draw_group_header(x, y, jpb_codes):
+            if code in jpb_codes:
                 pdf.setFont('Helvetica-Bold', 20)
                 pdf.drawCentredString(x + 14, page_h - y - 19, 'X')
 
@@ -260,45 +305,46 @@ def pdf_bytes_reportlab(data, kop_type):
         class_positions_650 = {'1': (300, 650), '2': (522, 650), '3': (722, 650), '4': (949, 650)}
         class_positions_1026 = {'1': (300, 1026), '2': (522, 1026), '3': (722, 1026), '4': (949, 1026)}
 
-        draw_any_group([data.kelas_bangunan_perkantoran], 50, 276, (2, 9))
-        draw_option(data.kelas_bangunan_perkantoran, class_positions_308)
-        draw_any_group([data.kelas_bangunan_toko], 50, 373, (4,))
-        draw_option(data.kelas_bangunan_toko, class_positions_403)
-        draw_any_group([data.kelas_bangunan_rs, data.luas_kamar_ac_central_rs, data.luas_ruang_lain_ac_central_rs], 50, 468, (5,))
-        draw_option(data.kelas_bangunan_rs, class_positions_500)
-        draw_cells(whole_number(data.luas_kamar_ac_central_rs), 300, 533, 126, 5)
-        draw_cells(whole_number(data.luas_ruang_lain_ac_central_rs), 998, 533, 127, 5)
-        draw_any_group([data.kelas_bangunan_olahraga], 50, 619, (6,))
-        draw_option(data.kelas_bangunan_olahraga, class_positions_650)
-
-        draw_any_group([
-            data.jenis_hotel, data.jumlah_bintang, data.jumlah_kamar,
-            data.luas_kamar_ac_central_hotel, data.luas_ruang_lain_ac_central_hotel
-        ], 50, 714, (7,))
-        draw_option(data.jenis_hotel, {'1': (300, 743), '2': (722, 743)})
-        draw_option(data.jumlah_bintang, {
-            '1': (300, 773), '2': (472, 773), '3': (648, 773),
-            '4': (821, 773), '5': (998, 773)
-        })
-        draw_cells(whole_number(data.jumlah_kamar), 300, 807, 101, 4)
-        draw_cells(whole_number(data.luas_kamar_ac_central_hotel), 648, 807, 126, 5)
-        draw_cells(whole_number(data.luas_ruang_lain_ac_central_hotel), 1023, 807, 126, 5)
-
-        draw_any_group([data.tipe_bangunan_parkir], 50, 893, (12,))
-        draw_option(data.tipe_bangunan_parkir, {'1': (300, 925), '2': (522, 925), '3': (722, 925), '4': (949, 925)})
-        draw_any_group([
-            data.kelas_bangunan_apartemen, data.jumlah_apartemen,
-            data.luas_kamar_ac_central_apartemen, data.luas_ruang_lain_ac_central_apartemen
-        ], 50, 990, (13,))
-        draw_option(data.kelas_bangunan_apartemen, class_positions_1026)
-        draw_cells(whole_number(data.jumlah_apartemen), 272, 1059, 129, 5)
-        draw_cells(whole_number(data.luas_kamar_ac_central_apartemen), 648, 1059, 126, 5)
-        draw_cells(whole_number(data.luas_ruang_lain_ac_central_apartemen), 1023, 1059, 126, 5)
-        draw_any_group([data.kapasitas_tangki, data.letak_tangki], 50, 1143, (15,))
-        draw_cells(whole_number(data.kapasitas_tangki), 324, 1175, 127, 5)
-        draw_option(data.letak_tangki, {'1': (673, 1175), '2': (870, 1175)})
-        draw_any_group([data.kelas_bangunan_sekolah], 50, 1225, (16,))
-        draw_option(data.kelas_bangunan_sekolah, {'1': (398, 1258), '2': (574, 1258)})
+        if code in (2, 9):
+            draw_group_header(50, 276, (2, 9))
+            draw_option(data.kelas_bangunan_perkantoran, class_positions_308)
+        if code == 4:
+            draw_group_header(50, 373, (4,))
+            draw_option(data.kelas_bangunan_toko, class_positions_403)
+        if code == 5:
+            draw_group_header(50, 468, (5,))
+            draw_option(data.kelas_bangunan_rs, class_positions_500)
+            draw_cells(whole_number(data.luas_kamar_ac_central_rs), 300, 533, 126, 5)
+            draw_cells(whole_number(data.luas_ruang_lain_ac_central_rs), 998, 533, 127, 5)
+        if code == 6:
+            draw_group_header(50, 619, (6,))
+            draw_option(data.kelas_bangunan_olahraga, class_positions_650)
+        if code == 7:
+            draw_group_header(50, 714, (7,))
+            draw_option(data.jenis_hotel, {'1': (300, 743), '2': (722, 743)})
+            draw_option(data.jumlah_bintang, {
+                '1': (300, 773), '2': (472, 773), '3': (648, 773),
+                '4': (821, 773), '5': (998, 773)
+            })
+            draw_cells(whole_number(data.jumlah_kamar), 300, 807, 101, 4)
+            draw_cells(whole_number(data.luas_kamar_ac_central_hotel), 648, 807, 126, 5)
+            draw_cells(whole_number(data.luas_ruang_lain_ac_central_hotel), 1023, 807, 126, 5)
+        if code == 12:
+            draw_group_header(50, 893, (12,))
+            draw_option(data.tipe_bangunan_parkir, {'1': (300, 925), '2': (522, 925), '3': (722, 925), '4': (949, 925)})
+        if code == 13:
+            draw_group_header(50, 990, (13,))
+            draw_option(data.kelas_bangunan_apartemen, class_positions_1026)
+            draw_cells(whole_number(data.jumlah_apartemen), 272, 1059, 129, 5)
+            draw_cells(whole_number(data.luas_kamar_ac_central_apartemen), 648, 1059, 126, 5)
+            draw_cells(whole_number(data.luas_ruang_lain_ac_central_apartemen), 1023, 1059, 126, 5)
+        if code == 15:
+            draw_group_header(50, 1143, (15,))
+            draw_cells(whole_number(data.kapasitas_tangki), 324, 1175, 127, 5)
+            draw_option(data.letak_tangki, {'1': (673, 1175), '2': (870, 1175)})
+        if code == 16:
+            draw_group_header(50, 1225, (16,))
+            draw_option(data.kelas_bangunan_sekolah, {'1': (398, 1258), '2': (574, 1258)})
 
         draw_date(data.created_at, 349, 1430)
         draw_date(data.created_at, 349, 1456)
@@ -323,6 +369,7 @@ def resolve_kop_type(data):
 
 app.jinja_env.globals.update(
     digits_only=digits_only,
+    fixed_digits=fixed_digits,
     option_code=option_code,
     whole_number=whole_number,
     split_rt_rw=split_rt_rw
@@ -368,21 +415,21 @@ def submit():
         # Gabungkan prefix daerah dengan inputan NOP user
         region_type = request.form.get('region_type')
         prefix = '3676' if region_type == 'tangsel' else '3719'
-        full_nop = prefix + request.form.get('nop')
+        full_nop = fixed_digits(prefix + request.form.get('nop', ''), 18)
         
         data = SpopData(
             region_type=region_type,
             nop=full_nop,
-            nop_bersama=request.form.get('nop_bersama'),
+            nop_bersama=fixed_digits(request.form.get('nop_bersama'), 18),
             jenis_transaksi=request.form.get('jenis_transaksi'),
-            nop_asal=request.form.get('nop_asal'),
-            no_sppt_lama=request.form.get('no_sppt_lama'),
+            nop_asal=fixed_digits(request.form.get('nop_asal'), 18),
+            no_sppt_lama=fixed_digits(request.form.get('no_sppt_lama'), 5),
             
             status_wp=request.form.get('status_wp'),
             pekerjaan_wp=request.form.get('pekerjaan_wp'),
             nama_wp=request.form.get('nama_wp'),
-            npwp_wp=request.form.get('npwp_wp'),
-            no_ktp_wp=request.form.get('no_ktp_wp'),
+            npwp_wp=fixed_digits(request.form.get('npwp_wp'), 15),
+            no_ktp_wp=fixed_digits(request.form.get('no_ktp_wp'), 16),
             email_wp=request.form.get('email_wp'),
             
             jalan_wp=request.form.get('jalan_wp'),
@@ -523,13 +570,15 @@ def admin_dashboard():
 
 @app.route('/cetak/<int:id>', methods=['GET'])
 def cetak(id):
-    data = SpopData.query.get_or_404(id)
+    raw_data = SpopData.query.get_or_404(id)
+    data = printable_data(raw_data)
     kop_type = resolve_kop_type(data)
     return render_template('pdf_template.html', data=data, kop_type=kop_type)
 
 @app.route('/cetak/<int:id>/pdf', methods=['GET'])
 def cetak_pdf(id):
-    data = SpopData.query.get_or_404(id)
+    raw_data = SpopData.query.get_or_404(id)
+    data = printable_data(raw_data)
     kop_type = resolve_kop_type(data)
     filename = f'SPOP-{data.nop}.pdf'
     pdf_bytes = pdf_bytes_reportlab(data, kop_type)

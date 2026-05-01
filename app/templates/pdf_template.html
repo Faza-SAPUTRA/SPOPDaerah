@@ -124,7 +124,7 @@
 {%- endmacro %}
 
 {% macro nop_boxes(nop, y, first_x=299) -%}
-    {%- set n = (digits_only(nop) ~ '').ljust(18) -%}
+    {%- set n = (fixed_digits(nop, 18) ~ '').ljust(18) -%}
     {{ cells(n[0:2], first_x, y, 53, 2) }}
     {{ cells(n[2:4], first_x + 74, y, 53, 2) }}
     {{ cells(n[4:7], first_x + 149, y, 77, 3) }}
@@ -162,8 +162,8 @@
     {{ nop_boxes(data.nop_asal, 491) }}
     {{ cells(digits_only(data.no_sppt_lama), 299, 532, 127, 5) }}
 
-    {{ text_row(data.jalan_op, 50, 675, 774, 30, 14, 0, 2, 0.58, -2) }}
-    {{ text_row((data.jalan_op or '')[30:], 50, 702, 774, 30, 14, 0, 2, 0.58, -2) }}
+    {{ text_row(data.jalan_op_line1 | default('', true), 50, 675, 774, 30, 14, 0, 2, 0.58, -2) }}
+    {{ text_row(data.jalan_op_line2 | default('', true), 50, 702, 774, 30, 14, 0, 2, 0.58, -2) }}
     {{ text_row(data.blok_kav_no_op, 846, 675, 303, 12, 15, 0, 2, 0.82, -2) }}
     {{ text_row(data.kelurahan_op, 50, 764, 650, 25, 14, 0, 2, 0.58, -2) }}
     {{ cells(op_parts[1], 846, 764, 56, 2, 24, 15, 0, 2, 0.82, -2) }}
@@ -180,11 +180,11 @@
     {{ mark(data.pekerjaan_wp, 4, 821, 927) }}
     {{ mark(data.pekerjaan_wp, 5, 998, 927) }}
 
-    {{ text_row(data.nama_wp, 50, 1010, 799, 31, 15, 0, 2, 0.82, -2) }}
-    {{ text_row((data.nama_wp or '')[31:], 50, 1036, 799, 31, 15, 0, 2, 0.82, -2) }}
+    {{ text_row(data.nama_wp_line1 | default('', true), 50, 1010, 799, 31, 15, 0, 2, 0.82, -2) }}
+    {{ text_row(data.nama_wp_line2 | default('', true), 50, 1036, 799, 31, 15, 0, 2, 0.82, -2) }}
     {{ cells(digits_only(data.npwp_wp), 870, 1010, 305, 15, 23, 13, 0, 2, 0.54, -2) }}
-    {{ text_row(data.jalan_wp, 50, 1098, 774, 30, 14, 0, 2, 0.58, -2) }}
-    {{ text_row((data.jalan_wp or '')[30:], 50, 1127, 774, 30, 14, 0, 2, 0.58, -2) }}
+    {{ text_row(data.jalan_wp_line1 | default('', true), 50, 1098, 774, 30, 14, 0, 2, 0.58, -2) }}
+    {{ text_row(data.jalan_wp_line2 | default('', true), 50, 1127, 774, 30, 14, 0, 2, 0.58, -2) }}
     {{ text_row(data.blok_kav_no_wp, 846, 1098, 303, 12, 15, 0, 2, 0.82, -2) }}
     {{ text_row(data.kelurahan_wp, 50, 1189, 650, 25, 14, 0, 2, 0.58, -2) }}
     {{ cells(wp_parts[1], 846, 1189, 56, 2, 24, 15, 0, 2, 0.82, -2) }}
@@ -316,66 +316,86 @@
     <img class="bg-img" src="{{ url_for('static', filename='img/' + img_pfx + '_4.png') }}">
 
     {% set jpb = option_code(data.jenis_penggunaan_bangunan) %}
-    {{ cells(whole_number(data.tinggi_kolom), 272, 140, 55, 2) }}
-    {{ cells(whole_number(data.lebar_bentang), 698, 140, 52, 2) }}
-    {{ cells(whole_number(data.daya_dukung_lantai), 272, 171, 105, 4) }}
-    {{ cells(whole_number(data.keliling_dinding), 698, 171, 52, 2) }}
-    {{ cells(whole_number(data.luas_mezzanine), 1047, 171, 102, 4) }}
-    {% if jpb in ['3', '8'] %}<div class="checkbox-x" style="left: 50px; top: 108px;">X</div>{% endif %}
-    {% if jpb in ['2', '9'] %}<div class="checkbox-x" style="left: 50px; top: 276px;">X</div>{% endif %}
-    {% if jpb == '4' %}<div class="checkbox-x" style="left: 50px; top: 373px;">X</div>{% endif %}
-    {% if jpb == '5' %}<div class="checkbox-x" style="left: 50px; top: 468px;">X</div>{% endif %}
-    {% if jpb == '6' %}<div class="checkbox-x" style="left: 50px; top: 619px;">X</div>{% endif %}
-    {% if jpb == '7' %}<div class="checkbox-x" style="left: 50px; top: 714px;">X</div>{% endif %}
-    {% if jpb == '12' %}<div class="checkbox-x" style="left: 50px; top: 893px;">X</div>{% endif %}
-    {% if jpb == '13' %}<div class="checkbox-x" style="left: 50px; top: 990px;">X</div>{% endif %}
-    {% if jpb == '15' %}<div class="checkbox-x" style="left: 50px; top: 1143px;">X</div>{% endif %}
-    {% if jpb == '16' %}<div class="checkbox-x" style="left: 50px; top: 1225px;">X</div>{% endif %}
+    {% if jpb in ['3', '8'] %}
+        <div class="checkbox-x" style="left: 50px; top: 108px;">X</div>
+        {{ cells(whole_number(data.tinggi_kolom), 272, 140, 55, 2) }}
+        {{ cells(whole_number(data.lebar_bentang), 698, 140, 52, 2) }}
+        {{ cells(whole_number(data.daya_dukung_lantai), 272, 171, 105, 4) }}
+        {{ cells(whole_number(data.keliling_dinding), 698, 171, 52, 2) }}
+        {{ cells(whole_number(data.luas_mezzanine), 1047, 171, 102, 4) }}
+    {% endif %}
 
-    {{ mark(data.kelas_bangunan_perkantoran, 1, 300, 308) }}
-    {{ mark(data.kelas_bangunan_perkantoran, 2, 522, 308) }}
-    {{ mark(data.kelas_bangunan_perkantoran, 3, 722, 308) }}
-    {{ mark(data.kelas_bangunan_perkantoran, 4, 949, 308) }}
-    {{ mark(data.kelas_bangunan_toko, 1, 300, 403) }}
-    {{ mark(data.kelas_bangunan_toko, 2, 522, 403) }}
-    {{ mark(data.kelas_bangunan_toko, 3, 722, 403) }}
-    {{ mark(data.kelas_bangunan_toko, 4, 949, 403) }}
-    {{ mark(data.kelas_bangunan_rs, 1, 300, 500) }}
-    {{ mark(data.kelas_bangunan_rs, 2, 522, 500) }}
-    {{ mark(data.kelas_bangunan_rs, 3, 722, 500) }}
-    {{ mark(data.kelas_bangunan_rs, 4, 949, 500) }}
-    {{ cells(whole_number(data.luas_kamar_ac_central_rs), 300, 533, 126, 5) }}
-    {{ cells(whole_number(data.luas_ruang_lain_ac_central_rs), 998, 533, 127, 5) }}
-    {{ mark(data.kelas_bangunan_olahraga, 1, 300, 650) }}
-    {{ mark(data.kelas_bangunan_olahraga, 2, 522, 650) }}
-    {{ mark(data.kelas_bangunan_olahraga, 3, 722, 650) }}
-    {{ mark(data.kelas_bangunan_olahraga, 4, 949, 650) }}
-    {{ mark(data.jenis_hotel, 1, 300, 743) }}
-    {{ mark(data.jenis_hotel, 2, 722, 743) }}
-    {{ mark(data.jumlah_bintang, 1, 300, 773) }}
-    {{ mark(data.jumlah_bintang, 2, 472, 773) }}
-    {{ mark(data.jumlah_bintang, 3, 648, 773) }}
-    {{ mark(data.jumlah_bintang, 4, 821, 773) }}
-    {{ mark(data.jumlah_bintang, 5, 998, 773) }}
-    {{ cells(whole_number(data.jumlah_kamar), 300, 807, 101, 4) }}
-    {{ cells(whole_number(data.luas_kamar_ac_central_hotel), 648, 807, 126, 5) }}
-    {{ cells(whole_number(data.luas_ruang_lain_ac_central_hotel), 1023, 807, 126, 5) }}
-    {{ mark(data.tipe_bangunan_parkir, 1, 300, 925) }}
-    {{ mark(data.tipe_bangunan_parkir, 2, 522, 925) }}
-    {{ mark(data.tipe_bangunan_parkir, 3, 722, 925) }}
-    {{ mark(data.tipe_bangunan_parkir, 4, 949, 925) }}
-    {{ mark(data.kelas_bangunan_apartemen, 1, 300, 1026) }}
-    {{ mark(data.kelas_bangunan_apartemen, 2, 522, 1026) }}
-    {{ mark(data.kelas_bangunan_apartemen, 3, 722, 1026) }}
-    {{ mark(data.kelas_bangunan_apartemen, 4, 949, 1026) }}
-    {{ cells(whole_number(data.jumlah_apartemen), 272, 1059, 129, 5) }}
-    {{ cells(whole_number(data.luas_kamar_ac_central_apartemen), 648, 1059, 126, 5) }}
-    {{ cells(whole_number(data.luas_ruang_lain_ac_central_apartemen), 1023, 1059, 126, 5) }}
-    {{ cells(whole_number(data.kapasitas_tangki), 324, 1175, 127, 5) }}
-    {{ mark(data.letak_tangki, 1, 673, 1175) }}
-    {{ mark(data.letak_tangki, 2, 870, 1175) }}
-    {{ mark(data.kelas_bangunan_sekolah, 1, 398, 1258) }}
-    {{ mark(data.kelas_bangunan_sekolah, 2, 574, 1258) }}
+    {% if jpb in ['2', '9'] %}
+        <div class="checkbox-x" style="left: 50px; top: 276px;">X</div>
+        {{ mark(data.kelas_bangunan_perkantoran, 1, 300, 308) }}
+        {{ mark(data.kelas_bangunan_perkantoran, 2, 522, 308) }}
+        {{ mark(data.kelas_bangunan_perkantoran, 3, 722, 308) }}
+        {{ mark(data.kelas_bangunan_perkantoran, 4, 949, 308) }}
+    {% endif %}
+    {% if jpb == '4' %}
+        <div class="checkbox-x" style="left: 50px; top: 373px;">X</div>
+        {{ mark(data.kelas_bangunan_toko, 1, 300, 403) }}
+        {{ mark(data.kelas_bangunan_toko, 2, 522, 403) }}
+        {{ mark(data.kelas_bangunan_toko, 3, 722, 403) }}
+        {{ mark(data.kelas_bangunan_toko, 4, 949, 403) }}
+    {% endif %}
+    {% if jpb == '5' %}
+        <div class="checkbox-x" style="left: 50px; top: 468px;">X</div>
+        {{ mark(data.kelas_bangunan_rs, 1, 300, 500) }}
+        {{ mark(data.kelas_bangunan_rs, 2, 522, 500) }}
+        {{ mark(data.kelas_bangunan_rs, 3, 722, 500) }}
+        {{ mark(data.kelas_bangunan_rs, 4, 949, 500) }}
+        {{ cells(whole_number(data.luas_kamar_ac_central_rs), 300, 533, 126, 5) }}
+        {{ cells(whole_number(data.luas_ruang_lain_ac_central_rs), 998, 533, 127, 5) }}
+    {% endif %}
+    {% if jpb == '6' %}
+        <div class="checkbox-x" style="left: 50px; top: 619px;">X</div>
+        {{ mark(data.kelas_bangunan_olahraga, 1, 300, 650) }}
+        {{ mark(data.kelas_bangunan_olahraga, 2, 522, 650) }}
+        {{ mark(data.kelas_bangunan_olahraga, 3, 722, 650) }}
+        {{ mark(data.kelas_bangunan_olahraga, 4, 949, 650) }}
+    {% endif %}
+    {% if jpb == '7' %}
+        <div class="checkbox-x" style="left: 50px; top: 714px;">X</div>
+        {{ mark(data.jenis_hotel, 1, 300, 743) }}
+        {{ mark(data.jenis_hotel, 2, 722, 743) }}
+        {{ mark(data.jumlah_bintang, 1, 300, 773) }}
+        {{ mark(data.jumlah_bintang, 2, 472, 773) }}
+        {{ mark(data.jumlah_bintang, 3, 648, 773) }}
+        {{ mark(data.jumlah_bintang, 4, 821, 773) }}
+        {{ mark(data.jumlah_bintang, 5, 998, 773) }}
+        {{ cells(whole_number(data.jumlah_kamar), 300, 807, 101, 4) }}
+        {{ cells(whole_number(data.luas_kamar_ac_central_hotel), 648, 807, 126, 5) }}
+        {{ cells(whole_number(data.luas_ruang_lain_ac_central_hotel), 1023, 807, 126, 5) }}
+    {% endif %}
+    {% if jpb == '12' %}
+        <div class="checkbox-x" style="left: 50px; top: 893px;">X</div>
+        {{ mark(data.tipe_bangunan_parkir, 1, 300, 925) }}
+        {{ mark(data.tipe_bangunan_parkir, 2, 522, 925) }}
+        {{ mark(data.tipe_bangunan_parkir, 3, 722, 925) }}
+        {{ mark(data.tipe_bangunan_parkir, 4, 949, 925) }}
+    {% endif %}
+    {% if jpb == '13' %}
+        <div class="checkbox-x" style="left: 50px; top: 990px;">X</div>
+        {{ mark(data.kelas_bangunan_apartemen, 1, 300, 1026) }}
+        {{ mark(data.kelas_bangunan_apartemen, 2, 522, 1026) }}
+        {{ mark(data.kelas_bangunan_apartemen, 3, 722, 1026) }}
+        {{ mark(data.kelas_bangunan_apartemen, 4, 949, 1026) }}
+        {{ cells(whole_number(data.jumlah_apartemen), 272, 1059, 129, 5) }}
+        {{ cells(whole_number(data.luas_kamar_ac_central_apartemen), 648, 1059, 126, 5) }}
+        {{ cells(whole_number(data.luas_ruang_lain_ac_central_apartemen), 1023, 1059, 126, 5) }}
+    {% endif %}
+    {% if jpb == '15' %}
+        <div class="checkbox-x" style="left: 50px; top: 1143px;">X</div>
+        {{ cells(whole_number(data.kapasitas_tangki), 324, 1175, 127, 5) }}
+        {{ mark(data.letak_tangki, 1, 673, 1175) }}
+        {{ mark(data.letak_tangki, 2, 870, 1175) }}
+    {% endif %}
+    {% if jpb == '16' %}
+        <div class="checkbox-x" style="left: 50px; top: 1225px;">X</div>
+        {{ mark(data.kelas_bangunan_sekolah, 1, 398, 1258) }}
+        {{ mark(data.kelas_bangunan_sekolah, 2, 574, 1258) }}
+    {% endif %}
 
     {{ date_cells(data.created_at, 349, 1430) }}
     {{ date_cells(data.created_at, 349, 1456) }}
