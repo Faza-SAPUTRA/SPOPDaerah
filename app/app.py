@@ -27,7 +27,8 @@ def normalize_database_url(url):
 # Database config
 basedir = os.path.abspath(os.path.dirname(__file__))
 database_url = normalize_database_url(os.environ.get('DATABASE_URL'))
-app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///' + os.path.join(basedir, 'spop.db')
+sqlite_path = os.path.join('/tmp', 'spop.db') if os.environ.get('VERCEL') else os.path.join(basedir, 'spop.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///' + sqlite_path
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
