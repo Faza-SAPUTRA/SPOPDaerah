@@ -1,14 +1,25 @@
 import os
 import io
+import sys
 from functools import wraps
 from types import SimpleNamespace
 from flask import Flask, render_template, request, redirect, url_for, send_file, flash, make_response, session
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import inspect, text
+
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+if CURRENT_DIR not in sys.path:
+    sys.path.insert(0, CURRENT_DIR)
+
 from models import db, SpopData
 import pandas as pd
 
-app = Flask(__name__)
+app = Flask(
+    __name__,
+    template_folder=os.path.join(CURRENT_DIR, 'templates'),
+    static_folder=os.path.join(CURRENT_DIR, 'static'),
+    root_path=CURRENT_DIR
+)
 app.secret_key = os.environ.get('SPOP_SECRET_KEY', 'super-secret-key-spop')
 ADMIN_USERNAME = os.environ.get('SPOP_ADMIN_USERNAME', 'admin')
 ADMIN_PASSWORD = os.environ.get('SPOP_ADMIN_PASSWORD', 'admin123')
