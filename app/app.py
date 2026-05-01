@@ -13,9 +13,21 @@ app.secret_key = os.environ.get('SPOP_SECRET_KEY', 'super-secret-key-spop')
 ADMIN_USERNAME = os.environ.get('SPOP_ADMIN_USERNAME', 'admin')
 ADMIN_PASSWORD = os.environ.get('SPOP_ADMIN_PASSWORD', 'admin123')
 
+def normalize_database_url(url):
+    url = str(url or '').strip()
+    if not url:
+        return ''
+    if url.startswith('postgres://'):
+        url = url.replace('postgres://', 'postgresql://', 1)
+    if url.startswith('postgresql://') and 'sslmode=' not in url:
+        separator = '&' if '?' in url else '?'
+        url = f'{url}{separator}sslmode=require'
+    return url
+
 # Database config
 basedir = os.path.abspath(os.path.dirname(__file__))
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'spop.db')
+database_url = normalize_database_url(os.environ.get('DATABASE_URL'))
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///' + os.path.join(basedir, 'spop.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
