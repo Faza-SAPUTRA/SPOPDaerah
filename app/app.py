@@ -4,7 +4,7 @@ from functools import wraps
 from types import SimpleNamespace
 from flask import Flask, render_template, request, redirect, url_for, send_file, flash, make_response, session
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import text
+from sqlalchemy import inspect, text
 from models import db, SpopData
 import pandas as pd
 
@@ -156,8 +156,11 @@ def missing_required_fields(field_names):
     return [field for field in field_names if not clean_text(request.form.get(field))]
 
 def ensure_extra_columns():
+    inspector = inspect(db.engine)
+    if not inspector.has_table('spop_data'):
+        return
     columns = {
-        row[1] for row in db.session.execute(text("PRAGMA table_info(spop_data)")).fetchall()
+        column['name'] for column in inspector.get_columns('spop_data')
     }
     extra_columns = {
         'tinggi_kolom': 'FLOAT',
