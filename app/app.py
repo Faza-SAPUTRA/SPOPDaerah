@@ -37,6 +37,156 @@ def split_rt_rw(value):
     rw = digits_only(parts[1]) if len(parts) > 1 else ''
     return rt.zfill(3)[-3:] if rt else '', rw.zfill(2)[-2:] if rw else ''
 
+def pdf_bytes_reportlab(data, kop_type):
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.utils import ImageReader
+
+    page_w, page_h = 1190, 1683
+    img_pfx = 'tangsel' if kop_type == 'tangsel' else 'kab'
+    buffer = io.BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=(page_w, page_h))
+
+    def bg(page_no):
+        image_path = os.path.join(app.root_path, 'static', 'img', f'{img_pfx}_{page_no}.png')
+        pdf.drawImage(ImageReader(image_path), 0, 0, width=page_w, height=page_h)
+
+    def draw_cells(value, x, y, w, count, h=24, size=15):
+        text = (str(value or '')[:count]).ljust(count)
+        cell_w = w / count
+        pdf.setFont('Courier-Bold', size)
+        for idx, char in enumerate(text):
+            if char == ' ':
+                continue
+            cx = x + (idx + 0.5) * cell_w
+            baseline = page_h - y - (h / 2) - (size * 0.33)
+            pdf.drawCentredString(cx, baseline, char)
+
+    def draw_text(value, x, y, w, count, size=15):
+        draw_cells((value or '').upper(), x, y, w, count, 24, size)
+
+    def draw_mark(value, code, x, y):
+        if option_code(value) == str(code):
+            pdf.setFont('Helvetica-Bold', 20)
+            pdf.drawCentredString(x + 14, page_h - y - 19, 'X')
+
+    def draw_date(date_value, x, y):
+        draw_cells(date_value.strftime('%d'), x, y, 51, 2)
+        draw_cells(date_value.strftime('%m'), x + 77, y, 51, 2)
+        draw_cells(date_value.strftime('%y'), x + 153, y, 51, 2)
+
+    def draw_nop(nop, y, first_x=299):
+        n = digits_only(nop).ljust(18)
+        draw_cells(n[0:2], first_x, y, 53, 2)
+        draw_cells(n[2:4], first_x + 74, y, 53, 2)
+        draw_cells(n[4:7], first_x + 149, y, 77, 3)
+        draw_cells(n[7:10], first_x + 247, y, 81, 3)
+        draw_cells(n[10:13], first_x + 349, y, 77, 3)
+        draw_cells(n[13:17], first_x + 448, y, 102, 4)
+        draw_cells(n[17:18], first_x + 600, y, 28, 1)
+
+    op_rt, op_rw = split_rt_rw(data.rt_rw_op)
+    wp_rt, wp_rw = split_rt_rw(data.rt_rw_wp)
+
+    bg(1)
+    draw_mark(data.jenis_transaksi, 1, 299, 250)
+    draw_mark(data.jenis_transaksi, 2, 599, 250)
+    draw_mark(data.jenis_transaksi, 3, 924, 250)
+    draw_nop(data.nop, 339)
+    draw_nop(data.nop_bersama, 381)
+    draw_nop(data.nop_asal, 491)
+    draw_cells(digits_only(data.no_sppt_lama), 299, 532, 127, 5)
+    draw_text(data.jalan_op, 50, 675, 774, 30)
+    draw_text((data.jalan_op or '')[30:], 50, 702, 774, 30)
+    draw_text(data.blok_kav_no_op, 846, 675, 303, 12)
+    draw_text(data.kelurahan_op, 50, 764, 650, 25)
+    draw_cells(op_rw, 846, 764, 56, 2)
+    draw_cells(op_rt, 949, 764, 77, 3)
+    draw_mark(data.status_wp, 1, 223, 886)
+    draw_mark(data.status_wp, 2, 398, 886)
+    draw_mark(data.status_wp, 3, 599, 886)
+    draw_mark(data.status_wp, 4, 821, 886)
+    draw_mark(data.status_wp, 5, 998, 886)
+    draw_mark(data.pekerjaan_wp, 1, 223, 927)
+    draw_mark(data.pekerjaan_wp, 2, 398, 927)
+    draw_mark(data.pekerjaan_wp, 3, 599, 927)
+    draw_mark(data.pekerjaan_wp, 4, 821, 927)
+    draw_mark(data.pekerjaan_wp, 5, 998, 927)
+    draw_text(data.nama_wp, 50, 1010, 799, 31)
+    draw_text((data.nama_wp or '')[31:], 50, 1036, 799, 31)
+    draw_cells(digits_only(data.npwp_wp), 870, 1010, 305, 15, 23, 14)
+    draw_text(data.jalan_wp, 50, 1098, 774, 30)
+    draw_text((data.jalan_wp or '')[30:], 50, 1127, 774, 30)
+    draw_text(data.blok_kav_no_wp, 846, 1098, 303, 12)
+    draw_text(data.kelurahan_wp, 50, 1189, 650, 25)
+    draw_cells(wp_rw, 846, 1189, 56, 2)
+    draw_cells(wp_rt, 949, 1189, 77, 3)
+    draw_text(data.kabupaten_wp, 50, 1251, 650, 25)
+    draw_cells(digits_only(data.no_ktp_wp), 50, 1313, 650, 25, 24, 14)
+    draw_cells(whole_number(data.luas_bumi, 6), 198, 1437, 277, 11)
+    draw_text(data.kelas_zona_bumi, 1097, 1437, 53, 2)
+    draw_mark(data.jenis_tanah, 1, 272, 1499)
+    draw_mark(data.jenis_tanah, 2, 497, 1499)
+    draw_mark(data.jenis_tanah, 3, 722, 1499)
+    draw_mark(data.jenis_tanah, 4, 924, 1499)
+    pdf.showPage()
+
+    bg(2)
+    draw_cells(whole_number(data.jumlah_bangunan, 3), 248, 99, 79, 3)
+    pdf.setFont('Helvetica-Bold', 16)
+    pdf.drawCentredString(320, page_h - 315, (data.nama_wp or '').upper())
+    pdf.drawCentredString(645, page_h - 315, data.created_at.strftime('%d-%m-%y'))
+    draw_date(data.created_at, 272, 514)
+    draw_date(data.created_at, 870, 514)
+    pdf.setFont('Helvetica-Bold', 16)
+    pdf.drawString(858, page_h - 750, data.longitude or '')
+    pdf.drawString(858, page_h - 775, data.latitude or '')
+    pdf.showPage()
+
+    if data.jenis_penggunaan_bangunan:
+        bg(3)
+        draw_mark(data.jenis_transaksi, 1, 299, 180)
+        draw_mark(data.jenis_transaksi, 2, 599, 180)
+        draw_mark(data.jenis_transaksi, 3, 924, 180)
+        draw_nop(data.nop, 276, 198)
+        draw_cells(whole_number(data.jumlah_bangunan, 3), 1047, 254, 78, 3)
+        draw_cells('001', 1049, 298, 76, 3)
+        jpb_positions = {
+            1: (248, 415), 2: (522, 415), 3: (846, 415), 4: (248, 445),
+            5: (522, 445), 6: (846, 445), 7: (248, 474), 8: (522, 474),
+            9: (846, 474), 10: (248, 504), 11: (522, 504), 12: (846, 504),
+            13: (248, 534), 14: (522, 534), 15: (846, 534), 16: (248, 564)
+        }
+        code = int(option_code(data.jenis_penggunaan_bangunan) or 0)
+        if code in jpb_positions:
+            x, y = jpb_positions[code]
+            pdf.setFont('Helvetica-Bold', 20)
+            pdf.drawCentredString(x + 14, page_h - y - 19, 'X')
+        draw_cells(whole_number(data.luas_bangunan, 6), 248, 624, 277, 11)
+        draw_cells(whole_number(data.jumlah_lantai, 3), 821, 624, 81, 3)
+        draw_cells(whole_number(data.tahun_dibangun), 248, 657, 104, 4)
+        draw_cells(whole_number(data.tahun_direnovasi), 248, 689, 104, 4)
+        draw_cells(whole_number(data.daya_listrik), 973, 689, 176, 7)
+        draw_mark(data.kondisi_pada_umumnya, 1, 248, 733)
+        draw_mark(data.kondisi_pada_umumnya, 2, 423, 733)
+        draw_mark(data.kondisi_pada_umumnya, 3, 599, 733)
+        draw_mark(data.kondisi_pada_umumnya, 4, 772, 733)
+        draw_cells(whole_number(data.jumlah_ac_split), 248, 1035, 54, 2)
+        draw_cells(whole_number(data.jumlah_ac_window), 423, 1035, 52, 2)
+        draw_cells(whole_number(data.luas_kolam_renang), 248, 1100, 104, 4)
+        draw_cells(whole_number(data.jumlah_saluran_pes_pabx), 248, 1561, 104, 4)
+        draw_cells(whole_number(data.kedalaman_sumur_artesis), 899, 1561, 102, 4)
+        pdf.showPage()
+
+        bg(4)
+        draw_date(data.created_at, 349, 1430)
+        draw_date(data.created_at, 349, 1456)
+        draw_date(data.created_at, 870, 1456)
+        pdf.showPage()
+
+    pdf.save()
+    buffer.seek(0)
+    return buffer.getvalue()
+
 def resolve_kop_type(data):
     kop_type = data.region_type
     if kop_type:
@@ -191,18 +341,12 @@ def cetak(id):
 def cetak_pdf(id):
     data = SpopData.query.get_or_404(id)
     kop_type = resolve_kop_type(data)
-    html = render_template('pdf_template.html', data=data, kop_type=kop_type)
+    filename = f'SPOP-{data.nop}.pdf'
+    pdf_bytes = pdf_bytes_reportlab(data, kop_type)
 
-    try:
-        from weasyprint import HTML
-    except ImportError:
-        flash("WeasyPrint belum terinstall. Jalankan: pip install -r requirements.txt")
-        return redirect(url_for('success', id=id))
-
-    pdf_bytes = HTML(string=html, base_url=request.url_root).write_pdf()
     response = make_response(pdf_bytes)
     response.headers['Content-Type'] = 'application/pdf'
-    response.headers['Content-Disposition'] = f'attachment; filename=SPOP-{data.nop}.pdf'
+    response.headers['Content-Disposition'] = f'attachment; filename={filename}'
     return response
 
 @app.route('/admin/export', methods=['GET'])
