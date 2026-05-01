@@ -9,15 +9,12 @@
             margin: 0;
             padding: 0;
             background: #555;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
         }
         .page {
             position: relative;
             width: 1190px;
             height: 1683px;
-            margin: 20px 0;
+            margin: 20px auto;
             background: #fff;
             box-shadow: 0 0 10px rgba(0,0,0,.5);
             overflow: hidden;
@@ -33,45 +30,44 @@
         .box-strip {
             position: absolute;
             z-index: 5;
-            display: flex;
             font-family: "Courier New", Courier, monospace;
             font-size: 18px;
-            line-height: 1;
             font-weight: 900;
             color: #000;
             box-sizing: border-box;
             pointer-events: none;
+            overflow: hidden;
         }
         .box-char {
-            flex: 0 0 calc(100% / var(--count));
-            width: calc(100% / var(--count));
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            display: inline-block;
+            float: left;
+            width: var(--char-w);
+            height: var(--char-h);
+            line-height: var(--char-h);
             overflow: hidden;
             box-sizing: border-box;
+            text-align: center;
+            font-family: "Courier New", Courier, monospace;
+            font-weight: 900;
         }
         .box-char > span {
-            display: block;
+            display: inline-block;
             text-align: center;
-            transform: translate(var(--dx, -1px), var(--dy, 2px)) scaleX(var(--sx, 1));
+            transform: translateX(var(--dx, -1px)) scaleX(var(--sx, 1));
             transform-origin: center center;
             white-space: pre;
         }
-        .mark {
+        .checkbox-x {
             position: absolute;
             z-index: 6;
             width: 28px;
             height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             font-family: Arial, sans-serif;
             font-size: 20px;
-            line-height: 1;
+            line-height: 24px;
             font-weight: 700;
             color: #000;
+            text-align: center;
             pointer-events: none;
         }
         .sign {
@@ -115,15 +111,16 @@
 <body>
 {% macro cells(value, x, y, w, count, h=24, size=18, gap=0, dy=2, sx=1, dx=-1) -%}
     {%- set text = ((value or '') ~ '')[:count].ljust(count) -%}
-    <div class="box-strip" style="left: {{ x }}px; top: {{ y }}px; width: {{ w }}px; height: {{ h }}px; --count: {{ count }}; --dy: {{ dy }}px; --sx: {{ sx }}; --dx: {{ dx }}px; font-size: {{ size }}px; gap: {{ gap }}px;">
+    {%- set char_w = (w - (gap * (count - 1))) / count -%}
+    <div class="box-strip" style="left: {{ x }}px; top: {{ y }}px; width: {{ w }}px; height: {{ h }}px; font-size: {{ size }}px; --char-w: {{ char_w }}px; --char-h: {{ h }}px; --sx: {{ sx }}; --dx: {{ dx }}px;">
         {%- for i in range(count) -%}
-            <div class="box-char"><span>{{ text[i] }}</span></div>
+            <div class="box-char" style="{% if gap and not loop.last %}margin-right: {{ gap }}px;{% endif %}"><span>{% if text[i] == ' ' %}&nbsp;{% else %}{{ text[i] }}{% endif %}</span></div>
         {%- endfor -%}
     </div>
 {%- endmacro %}
 
 {% macro mark(value, code, x, y) -%}
-    {%- if option_code(value) == (code|string) -%}<div class="mark" style="left: {{ x }}px; top: {{ y }}px;">X</div>{%- endif -%}
+    {%- if option_code(value) == (code|string) -%}<div class="checkbox-x" style="left: {{ x }}px; top: {{ y }}px;">X</div>{%- endif -%}
 {%- endmacro %}
 
 {% macro nop_boxes(nop, y, first_x=299) -%}
@@ -302,8 +299,8 @@
 
     {{ cells(whole_number(data.panjang_pagar), 248, 1437, 104, 4) }}
     {% set bahan = (data.bahan_pagar or '').lower() %}
-    {% if 'baja' in bahan or 'besi' in bahan %}<div class="mark" style="left: 248px; top: 1466px;">X</div>{% endif %}
-    {% if 'bata' in bahan or 'beton' in bahan or 'batako' in bahan %}<div class="mark" style="left: 423px; top: 1466px;">X</div>{% endif %}
+    {% if 'baja' in bahan or 'besi' in bahan %}<div class="checkbox-x" style="left: 248px; top: 1466px;">X</div>{% endif %}
+    {% if 'bata' in bahan or 'beton' in bahan or 'batako' in bahan %}<div class="checkbox-x" style="left: 423px; top: 1466px;">X</div>{% endif %}
     {{ mark(data.pemadam_hydrant, 1, 949, 1437) }}
     {{ mark(data.pemadam_hydrant, 2, 1047, 1437) }}
     {{ mark(data.pemadam_sprinkler, 1, 949, 1466) }}
@@ -319,16 +316,16 @@
     <img class="bg-img" src="{{ url_for('static', filename='img/' + img_pfx + '_4.png') }}">
 
     {% set jpb = option_code(data.jenis_penggunaan_bangunan) %}
-    {% if jpb in ['3', '8'] %}<div class="mark" style="left: 50px; top: 108px;">X</div>{% endif %}
-    {% if jpb in ['2', '9'] %}<div class="mark" style="left: 50px; top: 276px;">X</div>{% endif %}
-    {% if jpb == '4' %}<div class="mark" style="left: 50px; top: 373px;">X</div>{% endif %}
-    {% if jpb == '5' %}<div class="mark" style="left: 50px; top: 468px;">X</div>{% endif %}
-    {% if jpb == '6' %}<div class="mark" style="left: 50px; top: 619px;">X</div>{% endif %}
-    {% if jpb == '7' %}<div class="mark" style="left: 50px; top: 714px;">X</div>{% endif %}
-    {% if jpb == '12' %}<div class="mark" style="left: 50px; top: 893px;">X</div>{% endif %}
-    {% if jpb == '13' %}<div class="mark" style="left: 50px; top: 990px;">X</div>{% endif %}
-    {% if jpb == '15' %}<div class="mark" style="left: 50px; top: 1143px;">X</div>{% endif %}
-    {% if jpb == '16' %}<div class="mark" style="left: 50px; top: 1225px;">X</div>{% endif %}
+    {% if jpb in ['3', '8'] %}<div class="checkbox-x" style="left: 50px; top: 108px;">X</div>{% endif %}
+    {% if jpb in ['2', '9'] %}<div class="checkbox-x" style="left: 50px; top: 276px;">X</div>{% endif %}
+    {% if jpb == '4' %}<div class="checkbox-x" style="left: 50px; top: 373px;">X</div>{% endif %}
+    {% if jpb == '5' %}<div class="checkbox-x" style="left: 50px; top: 468px;">X</div>{% endif %}
+    {% if jpb == '6' %}<div class="checkbox-x" style="left: 50px; top: 619px;">X</div>{% endif %}
+    {% if jpb == '7' %}<div class="checkbox-x" style="left: 50px; top: 714px;">X</div>{% endif %}
+    {% if jpb == '12' %}<div class="checkbox-x" style="left: 50px; top: 893px;">X</div>{% endif %}
+    {% if jpb == '13' %}<div class="checkbox-x" style="left: 50px; top: 990px;">X</div>{% endif %}
+    {% if jpb == '15' %}<div class="checkbox-x" style="left: 50px; top: 1143px;">X</div>{% endif %}
+    {% if jpb == '16' %}<div class="checkbox-x" style="left: 50px; top: 1225px;">X</div>{% endif %}
 
     {{ date_cells(data.created_at, 349, 1430) }}
     {{ date_cells(data.created_at, 349, 1456) }}
