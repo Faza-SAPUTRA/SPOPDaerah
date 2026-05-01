@@ -3,6 +3,7 @@ import io
 from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, send_file, flash, make_response, session
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import text
 from models import db, SpopData
 import pandas as pd
 
@@ -39,6 +40,53 @@ def split_rt_rw(value):
     rt = digits_only(parts[0]) if parts else ''
     rw = digits_only(parts[1]) if len(parts) > 1 else ''
     return rt.zfill(3)[-3:] if rt else '', rw.zfill(2)[-2:] if rw else ''
+
+def form_float(name):
+    try:
+        return float(request.form.get(name) or 0)
+    except (TypeError, ValueError):
+        return 0
+
+def form_int(name):
+    try:
+        return int(request.form.get(name) or 0)
+    except (TypeError, ValueError):
+        return 0
+
+def ensure_extra_columns():
+    columns = {
+        row[1] for row in db.session.execute(text("PRAGMA table_info(spop_data)")).fetchall()
+    }
+    extra_columns = {
+        'tinggi_kolom': 'FLOAT',
+        'lebar_bentang': 'FLOAT',
+        'daya_dukung_lantai': 'FLOAT',
+        'keliling_dinding': 'FLOAT',
+        'luas_mezzanine': 'FLOAT',
+        'kelas_bangunan_perkantoran': 'VARCHAR(50)',
+        'kelas_bangunan_toko': 'VARCHAR(50)',
+        'kelas_bangunan_rs': 'VARCHAR(50)',
+        'luas_kamar_ac_central_rs': 'FLOAT',
+        'luas_ruang_lain_ac_central_rs': 'FLOAT',
+        'kelas_bangunan_olahraga': 'VARCHAR(50)',
+        'jenis_hotel': 'VARCHAR(50)',
+        'jumlah_bintang': 'VARCHAR(50)',
+        'jumlah_kamar': 'INTEGER',
+        'luas_kamar_ac_central_hotel': 'FLOAT',
+        'luas_ruang_lain_ac_central_hotel': 'FLOAT',
+        'tipe_bangunan_parkir': 'VARCHAR(50)',
+        'kelas_bangunan_apartemen': 'VARCHAR(50)',
+        'jumlah_apartemen': 'INTEGER',
+        'luas_kamar_ac_central_apartemen': 'FLOAT',
+        'luas_ruang_lain_ac_central_apartemen': 'FLOAT',
+        'kapasitas_tangki': 'FLOAT',
+        'letak_tangki': 'VARCHAR(50)',
+        'kelas_bangunan_sekolah': 'VARCHAR(50)'
+    }
+    for column, column_type in extra_columns.items():
+        if column not in columns:
+            db.session.execute(text(f"ALTER TABLE spop_data ADD COLUMN {column} {column_type}"))
+    db.session.commit()
 
 def pdf_bytes_reportlab(data, kop_type):
     from reportlab.pdfgen import canvas
@@ -181,6 +229,77 @@ def pdf_bytes_reportlab(data, kop_type):
         pdf.showPage()
 
         bg(4)
+        c_values = [
+            data.tinggi_kolom, data.lebar_bentang, data.daya_dukung_lantai,
+            data.keliling_dinding, data.luas_mezzanine
+        ]
+        if any(value for value in c_values) or code in (3, 8):
+            pdf.setFont('Helvetica-Bold', 20)
+            pdf.drawCentredString(64, page_h - 108 - 19, 'X')
+        draw_cells(whole_number(data.tinggi_kolom), 272, 140, 55, 2)
+        draw_cells(whole_number(data.lebar_bentang), 698, 140, 52, 2)
+        draw_cells(whole_number(data.daya_dukung_lantai), 272, 171, 105, 4)
+        draw_cells(whole_number(data.keliling_dinding), 698, 171, 52, 2)
+        draw_cells(whole_number(data.luas_mezzanine), 1047, 171, 102, 4)
+
+        def draw_any_group(group_values, x, y, jpb_codes=()):
+            if any(value for value in group_values) or code in jpb_codes:
+                pdf.setFont('Helvetica-Bold', 20)
+                pdf.drawCentredString(x + 14, page_h - y - 19, 'X')
+
+        def draw_option(value, positions):
+            selected = option_code(value)
+            if selected in positions:
+                x, y = positions[selected]
+                pdf.setFont('Helvetica-Bold', 20)
+                pdf.drawCentredString(x + 14, page_h - y - 19, 'X')
+
+        class_positions_308 = {'1': (300, 308), '2': (522, 308), '3': (722, 308), '4': (949, 308)}
+        class_positions_403 = {'1': (300, 403), '2': (522, 403), '3': (722, 403), '4': (949, 403)}
+        class_positions_500 = {'1': (300, 500), '2': (522, 500), '3': (722, 500), '4': (949, 500)}
+        class_positions_650 = {'1': (300, 650), '2': (522, 650), '3': (722, 650), '4': (949, 650)}
+        class_positions_1026 = {'1': (300, 1026), '2': (522, 1026), '3': (722, 1026), '4': (949, 1026)}
+
+        draw_any_group([data.kelas_bangunan_perkantoran], 50, 276, (2, 9))
+        draw_option(data.kelas_bangunan_perkantoran, class_positions_308)
+        draw_any_group([data.kelas_bangunan_toko], 50, 373, (4,))
+        draw_option(data.kelas_bangunan_toko, class_positions_403)
+        draw_any_group([data.kelas_bangunan_rs, data.luas_kamar_ac_central_rs, data.luas_ruang_lain_ac_central_rs], 50, 468, (5,))
+        draw_option(data.kelas_bangunan_rs, class_positions_500)
+        draw_cells(whole_number(data.luas_kamar_ac_central_rs), 300, 533, 126, 5)
+        draw_cells(whole_number(data.luas_ruang_lain_ac_central_rs), 998, 533, 127, 5)
+        draw_any_group([data.kelas_bangunan_olahraga], 50, 619, (6,))
+        draw_option(data.kelas_bangunan_olahraga, class_positions_650)
+
+        draw_any_group([
+            data.jenis_hotel, data.jumlah_bintang, data.jumlah_kamar,
+            data.luas_kamar_ac_central_hotel, data.luas_ruang_lain_ac_central_hotel
+        ], 50, 714, (7,))
+        draw_option(data.jenis_hotel, {'1': (300, 743), '2': (722, 743)})
+        draw_option(data.jumlah_bintang, {
+            '1': (300, 773), '2': (472, 773), '3': (648, 773),
+            '4': (821, 773), '5': (998, 773)
+        })
+        draw_cells(whole_number(data.jumlah_kamar), 300, 807, 101, 4)
+        draw_cells(whole_number(data.luas_kamar_ac_central_hotel), 648, 807, 126, 5)
+        draw_cells(whole_number(data.luas_ruang_lain_ac_central_hotel), 1023, 807, 126, 5)
+
+        draw_any_group([data.tipe_bangunan_parkir], 50, 893, (12,))
+        draw_option(data.tipe_bangunan_parkir, {'1': (300, 925), '2': (522, 925), '3': (722, 925), '4': (949, 925)})
+        draw_any_group([
+            data.kelas_bangunan_apartemen, data.jumlah_apartemen,
+            data.luas_kamar_ac_central_apartemen, data.luas_ruang_lain_ac_central_apartemen
+        ], 50, 990, (13,))
+        draw_option(data.kelas_bangunan_apartemen, class_positions_1026)
+        draw_cells(whole_number(data.jumlah_apartemen), 272, 1059, 129, 5)
+        draw_cells(whole_number(data.luas_kamar_ac_central_apartemen), 648, 1059, 126, 5)
+        draw_cells(whole_number(data.luas_ruang_lain_ac_central_apartemen), 1023, 1059, 126, 5)
+        draw_any_group([data.kapasitas_tangki, data.letak_tangki], 50, 1143, (15,))
+        draw_cells(whole_number(data.kapasitas_tangki), 324, 1175, 127, 5)
+        draw_option(data.letak_tangki, {'1': (673, 1175), '2': (870, 1175)})
+        draw_any_group([data.kelas_bangunan_sekolah], 50, 1225, (16,))
+        draw_option(data.kelas_bangunan_sekolah, {'1': (398, 1258), '2': (574, 1258)})
+
         draw_date(data.created_at, 349, 1430)
         draw_date(data.created_at, 349, 1456)
         draw_date(data.created_at, 870, 1456)
@@ -211,6 +330,7 @@ app.jinja_env.globals.update(
 
 with app.app_context():
     db.create_all()
+    ensure_extra_columns()
 
 def admin_required(view):
     @wraps(view)
@@ -276,20 +396,20 @@ def submit():
             rt_rw_op=request.form.get('rt_rw_op'),
             kelurahan_op=request.form.get('kelurahan_op'),
             kabupaten_op=request.form.get('kabupaten_op'),
-            luas_bumi=float(request.form.get('luas_bumi') or 0),
+            luas_bumi=form_float('luas_bumi'),
             kelas_zona_bumi=request.form.get('kelas_zona_bumi'),
             jenis_tanah=request.form.get('jenis_tanah'),
-            jumlah_bangunan=int(request.form.get('jumlah_bangunan') or 0),
-            luas_bangunan=float(request.form.get('luas_bangunan') or 0),
+            jumlah_bangunan=form_int('jumlah_bangunan'),
+            luas_bangunan=form_float('luas_bangunan'),
             longitude=request.form.get('longitude'),
             latitude=request.form.get('latitude'),
             
             # === DATA LSPOP ===
             jenis_penggunaan_bangunan=request.form.get('jenis_penggunaan_bangunan'),
-            jumlah_lantai=int(request.form.get('jumlah_lantai') or 0),
-            tahun_dibangun=int(request.form.get('tahun_dibangun') or 0),
-            tahun_direnovasi=int(request.form.get('tahun_direnovasi') or 0),
-            daya_listrik=int(request.form.get('daya_listrik') or 0),
+            jumlah_lantai=form_int('jumlah_lantai'),
+            tahun_dibangun=form_int('tahun_dibangun'),
+            tahun_direnovasi=form_int('tahun_direnovasi'),
+            daya_listrik=form_int('daya_listrik'),
             
             kondisi_pada_umumnya=request.form.get('kondisi_pada_umumnya'),
             konstruksi=request.form.get('konstruksi'),
@@ -298,33 +418,58 @@ def submit():
             lantai=request.form.get('lantai'),
             langit_langit=request.form.get('langit_langit'),
             
-            jumlah_ac_split=int(request.form.get('jumlah_ac_split') or 0),
-            jumlah_ac_window=int(request.form.get('jumlah_ac_window') or 0),
+            jumlah_ac_split=form_int('jumlah_ac_split'),
+            jumlah_ac_window=form_int('jumlah_ac_window'),
             ac_sentral=request.form.get('ac_sentral'),
-            luas_kolam_renang=float(request.form.get('luas_kolam_renang') or 0),
+            luas_kolam_renang=form_float('luas_kolam_renang'),
             kolam_renang_tipe=request.form.get('kolam_renang_tipe'),
             
-            luas_perkerasan_halaman_ringan=float(request.form.get('luas_perkerasan_halaman_ringan') or 0),
-            luas_perkerasan_halaman_sedang=float(request.form.get('luas_perkerasan_halaman_sedang') or 0),
-            luas_perkerasan_halaman_berat=float(request.form.get('luas_perkerasan_halaman_berat') or 0),
-            luas_perkerasan_halaman_dgn_penutup=float(request.form.get('luas_perkerasan_halaman_dgn_penutup') or 0),
+            luas_perkerasan_halaman_ringan=form_float('luas_perkerasan_halaman_ringan'),
+            luas_perkerasan_halaman_sedang=form_float('luas_perkerasan_halaman_sedang'),
+            luas_perkerasan_halaman_berat=form_float('luas_perkerasan_halaman_berat'),
+            luas_perkerasan_halaman_dgn_penutup=form_float('luas_perkerasan_halaman_dgn_penutup'),
             
-            jumlah_lift_penumpang=int(request.form.get('jumlah_lift_penumpang') or 0),
-            jumlah_lift_kapsul=int(request.form.get('jumlah_lift_kapsul') or 0),
-            jumlah_lift_barang=int(request.form.get('jumlah_lift_barang') or 0),
+            jumlah_lift_penumpang=form_int('jumlah_lift_penumpang'),
+            jumlah_lift_kapsul=form_int('jumlah_lift_kapsul'),
+            jumlah_lift_barang=form_int('jumlah_lift_barang'),
             
-            jumlah_tangga_berjalan_kurang=int(request.form.get('jumlah_tangga_berjalan_kurang') or 0),
-            jumlah_tangga_berjalan_lebih=int(request.form.get('jumlah_tangga_berjalan_lebih') or 0),
+            jumlah_tangga_berjalan_kurang=form_int('jumlah_tangga_berjalan_kurang'),
+            jumlah_tangga_berjalan_lebih=form_int('jumlah_tangga_berjalan_lebih'),
             
-            panjang_pagar=float(request.form.get('panjang_pagar') or 0),
+            panjang_pagar=form_float('panjang_pagar'),
             bahan_pagar=request.form.get('bahan_pagar'),
             
             pemadam_hydrant=request.form.get('pemadam_hydrant'),
             pemadam_sprinkler=request.form.get('pemadam_sprinkler'),
             pemadam_fire_alarm=request.form.get('pemadam_fire_alarm'),
             
-            jumlah_saluran_pes_pabx=int(request.form.get('jumlah_saluran_pes_pabx') or 0),
-            kedalaman_sumur_artesis=float(request.form.get('kedalaman_sumur_artesis') or 0)
+            jumlah_saluran_pes_pabx=form_int('jumlah_saluran_pes_pabx'),
+            kedalaman_sumur_artesis=form_float('kedalaman_sumur_artesis'),
+
+            tinggi_kolom=form_float('tinggi_kolom'),
+            lebar_bentang=form_float('lebar_bentang'),
+            daya_dukung_lantai=form_float('daya_dukung_lantai'),
+            keliling_dinding=form_float('keliling_dinding'),
+            luas_mezzanine=form_float('luas_mezzanine'),
+            kelas_bangunan_perkantoran=request.form.get('kelas_bangunan_perkantoran'),
+            kelas_bangunan_toko=request.form.get('kelas_bangunan_toko'),
+            kelas_bangunan_rs=request.form.get('kelas_bangunan_rs'),
+            luas_kamar_ac_central_rs=form_float('luas_kamar_ac_central_rs'),
+            luas_ruang_lain_ac_central_rs=form_float('luas_ruang_lain_ac_central_rs'),
+            kelas_bangunan_olahraga=request.form.get('kelas_bangunan_olahraga'),
+            jenis_hotel=request.form.get('jenis_hotel'),
+            jumlah_bintang=request.form.get('jumlah_bintang'),
+            jumlah_kamar=form_int('jumlah_kamar'),
+            luas_kamar_ac_central_hotel=form_float('luas_kamar_ac_central_hotel'),
+            luas_ruang_lain_ac_central_hotel=form_float('luas_ruang_lain_ac_central_hotel'),
+            tipe_bangunan_parkir=request.form.get('tipe_bangunan_parkir'),
+            kelas_bangunan_apartemen=request.form.get('kelas_bangunan_apartemen'),
+            jumlah_apartemen=form_int('jumlah_apartemen'),
+            luas_kamar_ac_central_apartemen=form_float('luas_kamar_ac_central_apartemen'),
+            luas_ruang_lain_ac_central_apartemen=form_float('luas_ruang_lain_ac_central_apartemen'),
+            kapasitas_tangki=form_float('kapasitas_tangki'),
+            letak_tangki=request.form.get('letak_tangki'),
+            kelas_bangunan_sekolah=request.form.get('kelas_bangunan_sekolah')
         )
         db.session.add(data)
         db.session.commit()

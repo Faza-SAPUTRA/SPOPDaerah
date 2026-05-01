@@ -92,6 +92,34 @@ class SpopData(db.Model):
     
     jumlah_saluran_pes_pabx = db.Column(db.Integer, nullable=True)
     kedalaman_sumur_artesis = db.Column(db.Float, nullable=True)
+
+    # LSPOP C. Data Tambahan untuk JPB 3/8
+    tinggi_kolom = db.Column(db.Float, nullable=True)
+    lebar_bentang = db.Column(db.Float, nullable=True)
+    daya_dukung_lantai = db.Column(db.Float, nullable=True)
+    keliling_dinding = db.Column(db.Float, nullable=True)
+    luas_mezzanine = db.Column(db.Float, nullable=True)
+
+    # LSPOP D. Tambahan untuk Bangunan Non-Standard
+    kelas_bangunan_perkantoran = db.Column(db.String(50), nullable=True)
+    kelas_bangunan_toko = db.Column(db.String(50), nullable=True)
+    kelas_bangunan_rs = db.Column(db.String(50), nullable=True)
+    luas_kamar_ac_central_rs = db.Column(db.Float, nullable=True)
+    luas_ruang_lain_ac_central_rs = db.Column(db.Float, nullable=True)
+    kelas_bangunan_olahraga = db.Column(db.String(50), nullable=True)
+    jenis_hotel = db.Column(db.String(50), nullable=True)
+    jumlah_bintang = db.Column(db.String(50), nullable=True)
+    jumlah_kamar = db.Column(db.Integer, nullable=True)
+    luas_kamar_ac_central_hotel = db.Column(db.Float, nullable=True)
+    luas_ruang_lain_ac_central_hotel = db.Column(db.Float, nullable=True)
+    tipe_bangunan_parkir = db.Column(db.String(50), nullable=True)
+    kelas_bangunan_apartemen = db.Column(db.String(50), nullable=True)
+    jumlah_apartemen = db.Column(db.Integer, nullable=True)
+    luas_kamar_ac_central_apartemen = db.Column(db.Float, nullable=True)
+    luas_ruang_lain_ac_central_apartemen = db.Column(db.Float, nullable=True)
+    kapasitas_tangki = db.Column(db.Float, nullable=True)
+    letak_tangki = db.Column(db.String(50), nullable=True)
+    kelas_bangunan_sekolah = db.Column(db.String(50), nullable=True)
     
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -162,6 +190,30 @@ class SpopData(db.Model):
             'pemadam_fire_alarm': self.pemadam_fire_alarm,
             'jumlah_saluran_pes_pabx': self.jumlah_saluran_pes_pabx,
             'kedalaman_sumur_artesis': self.kedalaman_sumur_artesis,
+            'tinggi_kolom': self.tinggi_kolom,
+            'lebar_bentang': self.lebar_bentang,
+            'daya_dukung_lantai': self.daya_dukung_lantai,
+            'keliling_dinding': self.keliling_dinding,
+            'luas_mezzanine': self.luas_mezzanine,
+            'kelas_bangunan_perkantoran': self.kelas_bangunan_perkantoran,
+            'kelas_bangunan_toko': self.kelas_bangunan_toko,
+            'kelas_bangunan_rs': self.kelas_bangunan_rs,
+            'luas_kamar_ac_central_rs': self.luas_kamar_ac_central_rs,
+            'luas_ruang_lain_ac_central_rs': self.luas_ruang_lain_ac_central_rs,
+            'kelas_bangunan_olahraga': self.kelas_bangunan_olahraga,
+            'jenis_hotel': self.jenis_hotel,
+            'jumlah_bintang': self.jumlah_bintang,
+            'jumlah_kamar': self.jumlah_kamar,
+            'luas_kamar_ac_central_hotel': self.luas_kamar_ac_central_hotel,
+            'luas_ruang_lain_ac_central_hotel': self.luas_ruang_lain_ac_central_hotel,
+            'tipe_bangunan_parkir': self.tipe_bangunan_parkir,
+            'kelas_bangunan_apartemen': self.kelas_bangunan_apartemen,
+            'jumlah_apartemen': self.jumlah_apartemen,
+            'luas_kamar_ac_central_apartemen': self.luas_kamar_ac_central_apartemen,
+            'luas_ruang_lain_ac_central_apartemen': self.luas_ruang_lain_ac_central_apartemen,
+            'kapasitas_tangki': self.kapasitas_tangki,
+            'letak_tangki': self.letak_tangki,
+            'kelas_bangunan_sekolah': self.kelas_bangunan_sekolah,
             
             'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S')
         }
