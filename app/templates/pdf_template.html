@@ -30,14 +30,10 @@
             height: 100%;
             z-index: 1;
         }
-        .cells {
+        .box-strip {
             position: absolute;
             z-index: 5;
-            display: grid;
-            grid-template-columns: repeat(var(--count), 1fr);
-            column-gap: var(--gap, 0);
-            align-items: center;
-            justify-items: center;
+            display: flex;
             font-family: "Courier New", Courier, monospace;
             font-size: 18px;
             line-height: 1;
@@ -46,10 +42,22 @@
             box-sizing: border-box;
             pointer-events: none;
         }
-        .cells span {
-            width: 100%;
+        .box-char {
+            flex: 0 0 calc(100% / var(--count));
+            width: calc(100% / var(--count));
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+        .box-char > span {
+            display: block;
             text-align: center;
             transform: translateY(var(--dy, 2px)) scaleX(var(--sx, 1));
+            transform-origin: center center;
+            white-space: pre;
         }
         .mark {
             position: absolute;
@@ -107,8 +115,10 @@
 <body>
 {% macro cells(value, x, y, w, count, h=24, size=18, gap=0, dy=2, sx=1) -%}
     {%- set text = ((value or '') ~ '')[:count].ljust(count) -%}
-    <div class="cells" style="left: {{ x }}px; top: {{ y }}px; width: {{ w }}px; height: {{ h }}px; --count: {{ count }}; --gap: {{ gap }}px; --dy: {{ dy }}px; --sx: {{ sx }}; font-size: {{ size }}px;">
-        {%- for i in range(count) -%}<span>{{ text[i] }}</span>{%- endfor -%}
+    <div class="box-strip" style="left: {{ x }}px; top: {{ y }}px; width: {{ w }}px; height: {{ h }}px; --count: {{ count }}; --dy: {{ dy }}px; --sx: {{ sx }}; font-size: {{ size }}px; gap: {{ gap }}px;">
+        {%- for i in range(count) -%}
+            <div class="box-char"><span>{{ text[i] }}</span></div>
+        {%- endfor -%}
     </div>
 {%- endmacro %}
 

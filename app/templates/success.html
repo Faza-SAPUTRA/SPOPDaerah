@@ -101,7 +101,7 @@
 <body>
 
 <div class="success-card">
-    <div class="icon">✓</div>
+    <div class="icon">OK</div>
     <h1>Data Berhasil Disimpan</h1>
     <p>Data Surat Pemberitahuan Objek Pajak telah tersimpan di sistem.</p>
     
@@ -112,7 +112,10 @@
 
     <div>
         <a href="/cetak/{{ data.id }}" class="btn" target="_blank">
-            🖨️ Cetak Formulir (Print)
+            Cetak HTML
+        </a>
+        <a href="/cetak/{{ data.id }}/pdf" class="btn">
+            Download PDF
         </a>
         <a href="/" class="btn btn-outline">
             + Input Baru

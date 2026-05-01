@@ -1,6 +1,6 @@
 import os
 import io
-from flask import Flask, render_template, request, redirect, url_for, send_file, flash
+from flask import Flask, render_template, request, redirect, url_for, send_file, flash, make_response
 from sqlalchemy.exc import IntegrityError
 from models import db, SpopData
 import pandas as pd
@@ -36,6 +36,18 @@ def split_rt_rw(value):
     rt = digits_only(parts[0]) if parts else ''
     rw = digits_only(parts[1]) if len(parts) > 1 else ''
     return rt.zfill(3)[-3:] if rt else '', rw.zfill(2)[-2:] if rw else ''
+
+def resolve_kop_type(data):
+    kop_type = data.region_type
+    if kop_type:
+        return kop_type
+
+    nop = data.nop or ""
+    if nop.startswith("3676"):
+        return "tangsel"
+    if nop.startswith("3719"):
+        return "kab_tangerang"
+    return "tangsel"
 
 app.jinja_env.globals.update(
     digits_only=digits_only,
@@ -172,18 +184,26 @@ def success(id):
 @app.route('/cetak/<int:id>', methods=['GET'])
 def cetak(id):
     data = SpopData.query.get_or_404(id)
-    # Gunakan region_type dari database jika ada, atau fallback deteksi dari NOP
-    kop_type = data.region_type
-    if not kop_type:
-        nop = data.nop or ""
-        if nop.startswith("3676"):
-            kop_type = "tangsel"
-        elif nop.startswith("3719"):
-            kop_type = "kab_tangerang"
-        else:
-            kop_type = "tangsel" # Default fallback
-            
+    kop_type = resolve_kop_type(data)
     return render_template('pdf_template.html', data=data, kop_type=kop_type)
+
+@app.route('/cetak/<int:id>/pdf', methods=['GET'])
+def cetak_pdf(id):
+    data = SpopData.query.get_or_404(id)
+    kop_type = resolve_kop_type(data)
+    html = render_template('pdf_template.html', data=data, kop_type=kop_type)
+
+    try:
+        from weasyprint import HTML
+    except ImportError:
+        flash("WeasyPrint belum terinstall. Jalankan: pip install -r requirements.txt")
+        return redirect(url_for('success', id=id))
+
+    pdf_bytes = HTML(string=html, base_url=request.url_root).write_pdf()
+    response = make_response(pdf_bytes)
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'attachment; filename=SPOP-{data.nop}.pdf'
+    return response
 
 @app.route('/admin/export', methods=['GET'])
 def export_excel():
