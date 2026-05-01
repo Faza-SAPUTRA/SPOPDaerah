@@ -26,8 +26,42 @@ def digits_only(value):
 def clean_text(value):
     return ' '.join(str(value or '').split())
 
-def fixed_digits(value, length):
-    return digits_only(value)[:length]
+def fixed_digits(value, length, pad=False):
+    text = digits_only(value)[:length]
+    if pad:
+        return text.zfill(length)
+    return text
+
+def blank_irrelevant_jpb_fields(payload, jpb_code):
+    groups = {
+        ('3', '8'): [
+            'tinggi_kolom', 'lebar_bentang', 'daya_dukung_lantai',
+            'keliling_dinding', 'luas_mezzanine'
+        ],
+        ('2', '9'): ['kelas_bangunan_perkantoran'],
+        ('4',): ['kelas_bangunan_toko'],
+        ('5',): [
+            'kelas_bangunan_rs', 'luas_kamar_ac_central_rs',
+            'luas_ruang_lain_ac_central_rs'
+        ],
+        ('6',): ['kelas_bangunan_olahraga'],
+        ('7',): [
+            'jenis_hotel', 'jumlah_bintang', 'jumlah_kamar',
+            'luas_kamar_ac_central_hotel', 'luas_ruang_lain_ac_central_hotel'
+        ],
+        ('12',): ['tipe_bangunan_parkir'],
+        ('13',): [
+            'kelas_bangunan_apartemen', 'jumlah_apartemen',
+            'luas_kamar_ac_central_apartemen',
+            'luas_ruang_lain_ac_central_apartemen'
+        ],
+        ('15',): ['kapasitas_tangki', 'letak_tangki'],
+        ('16',): ['kelas_bangunan_sekolah']
+    }
+    for allowed_codes, fields in groups.items():
+        if jpb_code not in allowed_codes:
+            for field in fields:
+                payload[field] = ''
 
 def split_fixed_text(value, first_count, second_count=0):
     text = clean_text(value).upper()
@@ -41,13 +75,13 @@ def printable_data(data):
         for column in SpopData.__table__.columns
     }
     digit_lengths = {
-        'nop': 18,
         'nop_bersama': 18,
         'nop_asal': 18,
         'no_sppt_lama': 5,
-        'npwp_wp': 15,
-        'no_ktp_wp': 16
+        'npwp_wp': 15
     }
+    payload['nop'] = fixed_digits(payload.get('nop'), 18, pad=True)
+    payload['no_ktp_wp'] = fixed_digits(payload.get('no_ktp_wp'), 16, pad=True)
     for field, length in digit_lengths.items():
         payload[field] = fixed_digits(payload.get(field), length)
     text_fields = [
@@ -65,6 +99,7 @@ def printable_data(data):
     ]
     for field in text_fields:
         payload[field] = clean_text(payload.get(field))
+    blank_irrelevant_jpb_fields(payload, option_code(payload.get('jenis_penggunaan_bangunan')))
     payload['jalan_op_line1'], payload['jalan_op_line2'] = split_fixed_text(payload.get('jalan_op'), 30, 30)
     payload['jalan_wp_line1'], payload['jalan_wp_line2'] = split_fixed_text(payload.get('jalan_wp'), 30, 30)
     payload['nama_wp_line1'], payload['nama_wp_line2'] = split_fixed_text(payload.get('nama_wp'), 31, 31)
@@ -415,7 +450,7 @@ def submit():
         # Gabungkan prefix daerah dengan inputan NOP user
         region_type = request.form.get('region_type')
         prefix = '3676' if region_type == 'tangsel' else '3719'
-        full_nop = fixed_digits(prefix + request.form.get('nop', ''), 18)
+        full_nop = fixed_digits(prefix + request.form.get('nop', ''), 18, pad=True)
         
         data = SpopData(
             region_type=region_type,
@@ -429,7 +464,7 @@ def submit():
             pekerjaan_wp=request.form.get('pekerjaan_wp'),
             nama_wp=request.form.get('nama_wp'),
             npwp_wp=fixed_digits(request.form.get('npwp_wp'), 15),
-            no_ktp_wp=fixed_digits(request.form.get('no_ktp_wp'), 16),
+            no_ktp_wp=fixed_digits(request.form.get('no_ktp_wp'), 16, pad=True),
             email_wp=request.form.get('email_wp'),
             
             jalan_wp=request.form.get('jalan_wp'),

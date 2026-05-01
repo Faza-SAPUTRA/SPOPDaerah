@@ -110,11 +110,11 @@
 </head>
 <body>
 {% macro cells(value, x, y, w, count, h=24, size=18, gap=0, dy=2, sx=1, dx=-1) -%}
-    {%- set text = ((value or '') ~ '')[:count].ljust(count) -%}
+    {%- set text = ((value | default('', true)) ~ '')[:count].ljust(count) -%}
     {%- set char_w = (w - (gap * (count - 1))) / count -%}
     <div class="box-strip" style="left: {{ x }}px; top: {{ y }}px; width: {{ w }}px; height: {{ h }}px; font-size: {{ size }}px; --char-w: {{ char_w }}px; --char-h: {{ h }}px; --sx: {{ sx }}; --dx: {{ dx }}px;">
-        {%- for i in range(count) -%}
-            <div class="box-char" style="{% if gap and not loop.last %}margin-right: {{ gap }}px;{% endif %}"><span>{% if text[i] == ' ' %}&nbsp;{% else %}{{ text[i] }}{% endif %}</span></div>
+        {%- for char in text[:count] -%}
+            <div class="box-char" style="{% if gap and not loop.last %}margin-right: {{ gap }}px;{% endif %}"><span>{% if char == ' ' %}&nbsp;{% else %}{{ char }}{% endif %}</span></div>
         {%- endfor -%}
     </div>
 {%- endmacro %}
@@ -124,7 +124,7 @@
 {%- endmacro %}
 
 {% macro nop_boxes(nop, y, first_x=299) -%}
-    {%- set n = (fixed_digits(nop, 18) ~ '').ljust(18) -%}
+    {%- set n = (fixed_digits(nop, 18, true) ~ '')[:18].ljust(18) -%}
     {{ cells(n[0:2], first_x, y, 53, 2) }}
     {{ cells(n[2:4], first_x + 74, y, 53, 2) }}
     {{ cells(n[4:7], first_x + 149, y, 77, 3) }}
@@ -135,7 +135,7 @@
 {%- endmacro %}
 
 {% macro text_row(value, x, y, w, count, size=18, gap=0, dy=2, sx=1, dx=-1) -%}
-    {{ cells((value or '').upper(), x, y, w, count, 24, size, gap, dy, sx, dx) }}
+    {{ cells((value | default('', true)).upper(), x, y, w, count, 24, size, gap, dy, sx, dx) }}
 {%- endmacro %}
 
 {% macro date_cells(date_value, x, y) -%}
@@ -164,8 +164,8 @@
 
     {{ text_row(data.jalan_op_line1 | default('', true), 50, 675, 774, 30, 14, 0, 2, 0.58, -2) }}
     {{ text_row(data.jalan_op_line2 | default('', true), 50, 702, 774, 30, 14, 0, 2, 0.58, -2) }}
-    {{ text_row(data.blok_kav_no_op, 846, 675, 303, 12, 15, 0, 2, 0.82, -2) }}
-    {{ text_row(data.kelurahan_op, 50, 764, 650, 25, 14, 0, 2, 0.58, -2) }}
+    {{ text_row(data.blok_kav_no_op | default('', true), 846, 675, 303, 12, 15, 0, 2, 0.82, -2) }}
+    {{ text_row(data.kelurahan_op | default('', true), 50, 764, 650, 25, 14, 0, 2, 0.58, -2) }}
     {{ cells(op_parts[1], 846, 764, 56, 2, 24, 15, 0, 2, 0.82, -2) }}
     {{ cells(op_parts[0], 949, 764, 77, 3, 24, 15, 0, 2, 0.82, -2) }}
 
@@ -182,15 +182,15 @@
 
     {{ text_row(data.nama_wp_line1 | default('', true), 50, 1010, 799, 31, 15, 0, 2, 0.82, -2) }}
     {{ text_row(data.nama_wp_line2 | default('', true), 50, 1036, 799, 31, 15, 0, 2, 0.82, -2) }}
-    {{ cells(digits_only(data.npwp_wp), 870, 1010, 305, 15, 23, 13, 0, 2, 0.54, -2) }}
+    {{ cells(fixed_digits(data.npwp_wp, 15), 870, 1010, 305, 15, 23, 13, 0, 2, 0.54, -2) }}
     {{ text_row(data.jalan_wp_line1 | default('', true), 50, 1098, 774, 30, 14, 0, 2, 0.58, -2) }}
     {{ text_row(data.jalan_wp_line2 | default('', true), 50, 1127, 774, 30, 14, 0, 2, 0.58, -2) }}
-    {{ text_row(data.blok_kav_no_wp, 846, 1098, 303, 12, 15, 0, 2, 0.82, -2) }}
-    {{ text_row(data.kelurahan_wp, 50, 1189, 650, 25, 14, 0, 2, 0.58, -2) }}
+    {{ text_row(data.blok_kav_no_wp | default('', true), 846, 1098, 303, 12, 15, 0, 2, 0.82, -2) }}
+    {{ text_row(data.kelurahan_wp | default('', true), 50, 1189, 650, 25, 14, 0, 2, 0.58, -2) }}
     {{ cells(wp_parts[1], 846, 1189, 56, 2, 24, 15, 0, 2, 0.82, -2) }}
     {{ cells(wp_parts[0], 949, 1189, 77, 3, 24, 15, 0, 2, 0.82, -2) }}
-    {{ text_row(data.kabupaten_wp, 50, 1251, 650, 25, 14, 0, 2, 0.58, -2) }}
-    {{ cells(digits_only(data.no_ktp_wp), 50, 1313, 650, 25, 24, 13, 0, 2, 0.54, -2) }}
+    {{ text_row(data.kabupaten_wp | default('', true), 50, 1251, 650, 25, 14, 0, 2, 0.58, -2) }}
+    {{ cells(fixed_digits(data.no_ktp_wp, 16, true), 50, 1313, 650, 25, 24, 13, 0, 2, 0.54, -2) }}
 
     {{ cells(whole_number(data.luas_bumi, 6), 198, 1437, 277, 11) }}
     {{ text_row(data.kelas_zona_bumi, 1097, 1437, 53, 2) }}
