@@ -33,20 +33,21 @@
         }
 
         .container {
-            max-width: 900px;
+            max-width: 1200px;
             margin: 0 auto;
         }
 
         .header {
             text-align: center;
-            margin-bottom: 2rem;
+            margin-bottom: 3rem;
         }
 
         .header h1 {
             color: var(--primary);
             font-weight: 700;
             margin-bottom: 0.5rem;
-            font-size: 2rem;
+            font-size: 2.2rem;
+            letter-spacing: -0.5px;
         }
 
         .header p {
@@ -54,49 +55,166 @@
             font-size: 1.1rem;
         }
 
-        .form-card {
-            background: var(--card-bg);
+        /* Layout Grid */
+        .form-layout {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 2.5rem;
+            align-items: start;
+        }
+
+        @media (max-width: 992px) {
+            .form-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Sidebar Stepper */
+        .sidebar {
+            position: sticky;
+            top: 2rem;
+            background: #fff;
             border-radius: var(--radius);
             padding: 2rem;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            margin-bottom: 2rem;
-            border-top: 5px solid var(--primary);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border-left: 4px solid var(--primary);
+        }
+
+        .stepper-v {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .step-item {
+            display: flex;
+            gap: 1.2rem;
+            padding: 1.2rem 0;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .step-item:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            left: 17px;
+            top: 3.5rem;
+            bottom: -0.5rem;
+            width: 2px;
+            background: #eee;
+            z-index: 1;
+        }
+
+        .step-circle {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #fff;
+            border: 2px solid #eee;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            flex-shrink: 0;
+            z-index: 2;
+            transition: all 0.3s;
+        }
+
+        .step-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .step-label {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            transition: color 0.3s;
+        }
+
+        .step-status {
+            font-size: 0.75rem;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* States */
+        .step-item.active .step-circle {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
+            box-shadow: 0 0 0 5px rgba(168, 30, 42, 0.1);
+        }
+        .step-item.active .step-label {
+            color: var(--primary);
+        }
+
+        .step-item.completed .step-circle {
+            background: #e8f5e9;
+            border-color: #2e7d32;
+            color: #2e7d32;
+        }
+        .step-item.completed .step-label {
+            color: #2e7d32;
+        }
+        .step-item.completed::after {
+            background: #2e7d32 !important;
+        }
+
+        /* Form Content */
+        .form-content {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 2.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            min-height: 500px;
         }
 
         .section-title {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: var(--primary);
-            margin-bottom: 1.5rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid var(--border);
-            margin-top: 2rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 2rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid #f0f0f0;
+            position: relative;
         }
         
-        .section-title:first-child {
-            margin-top: 0;
+        .section-title::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: -2px;
+            width: 60px;
+            height: 2px;
+            background: var(--primary);
         }
 
         .form-group {
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.8rem;
         }
 
         .form-row {
             display: flex;
-            gap: 1.5rem;
+            gap: 2rem;
             flex-wrap: wrap;
         }
 
         .form-col {
             flex: 1;
-            min-width: 250px;
+            min-width: 280px;
         }
 
         label {
             display: block;
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-            color: var(--text-main);
+            font-weight: 600;
+            margin-bottom: 0.7rem;
+            color: #444;
+            font-size: 0.95rem;
         }
 
         input[type="text"],
@@ -104,110 +222,101 @@
         input[type="email"],
         select {
             width: 100%;
-            padding: 0.8rem;
+            padding: 0.9rem 1rem;
             font-size: 1rem;
-            border: 1px solid var(--border);
+            border: 1px solid #ddd;
             border-radius: var(--radius);
-            font-family: 'Inter', sans-serif;
-            transition: border-color 0.3s;
+            background-color: #fcfcfc;
+            transition: all 0.2s;
         }
 
         input:focus, select:focus {
-            outline: none;
+            background-color: #fff;
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(168, 30, 42, 0.1);
+            box-shadow: 0 0 0 4px rgba(168, 30, 42, 0.08);
         }
 
-        .btn-submit {
-            display: block;
-            width: 100%;
-            padding: 1.2rem;
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            border-radius: var(--radius);
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.3s, transform 0.1s;
-            margin-top: 2rem;
+        /* Wizard Animations */
+        .wizard-step {
+            display: none;
+            animation: fadeIn 0.4s ease;
         }
-
-        .btn-submit:hover {
-            background-color: var(--primary-hover);
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-
-        .btn-submit:active {
-            transform: scale(0.98);
-        }
-
-        .alert {
-            padding: 1rem;
-            background-color: #ffebee;
-            color: #c62828;
-            border-radius: var(--radius);
-            margin-bottom: 1.5rem;
-        }
-        
-        .helper-text {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            margin-top: 0.25rem;
-        }
-        .wizard-progress {
-            display: flex;
-            gap: 0.75rem;
-            overflow-x: auto;
-            padding-bottom: 0.75rem;
-            margin-bottom: 1.5rem;
-            border-bottom: 1px solid var(--border);
-        }
-        .step-pill {
-            border: 1px solid var(--border);
-            background: #fff;
-            color: var(--text-muted);
-            border-radius: 999px;
-            padding: 0.55rem 0.9rem;
-            font: inherit;
-            font-size: 0.9rem;
-            font-weight: 600;
-            white-space: nowrap;
-            cursor: pointer;
-        }
-        .step-pill.active {
-            background: var(--primary);
-            border-color: var(--primary);
-            color: #fff;
-        }
-        .wizard-step { display: none; }
         .wizard-step.active { display: block; }
+
         .wizard-actions {
             display: flex;
             justify-content: space-between;
-            gap: 1rem;
-            margin-top: 2rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid var(--border);
+            gap: 1.5rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid #eee;
         }
-        .btn-secondary {
-            padding: 1rem 1.2rem;
-            background: #fff;
-            color: var(--primary);
-            border: 1px solid var(--primary);
+
+        .btn-submit, .btn-next {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 1rem 2.5rem;
             border-radius: var(--radius);
-            font-size: 1rem;
             font-weight: 700;
             cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
         }
-        .btn-secondary:disabled {
-            opacity: .45;
-            cursor: not-allowed;
+
+        .btn-submit:hover, .btn-next:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(168, 30, 42, 0.2);
         }
-        .wizard-actions .btn-submit {
-            width: auto;
-            min-width: 180px;
-            margin-top: 0;
-            padding: 1rem 1.2rem;
+
+        .btn-secondary {
+            background: #fff;
+            color: #666;
+            border: 1px solid #ddd;
+            padding: 1rem 2rem;
+            border-radius: var(--radius);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            border-color: #999;
+            background: #f9f9f9;
+        }
+
+        /* Utility Card for JSON */
+        .upload-card {
+            background: #f1f8e9;
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 2.5rem;
+            border: 1px solid #c5e1a5;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1.5rem;
+        }
+
+        .upload-info h3 { color: #2e7d32; font-size: 1.1rem; margin-bottom: 0.25rem; }
+        .upload-info p { font-size: 0.85rem; color: #558b2f; margin: 0; }
+
+        @media (max-width: 768px) {
+            body { padding: 1rem 0.5rem; }
+            .form-content { padding: 1.5rem; }
+            .upload-card { flex-direction: column; align-items: stretch; text-align: center; }
+            .sidebar { position: static; margin-bottom: 2rem; }
+            .stepper-v { flex-direction: row; overflow-x: auto; padding-bottom: 1rem; gap: 1rem; }
+            .step-item { padding: 0; min-width: 120px; flex-direction: column; align-items: center; text-align: center; }
+            .step-item::after { display: none; }
+            .step-circle { margin-bottom: 0.5rem; }
         }
         @media (max-width: 640px) {
             .wizard-actions { flex-direction: column; }
@@ -224,15 +333,17 @@
         <p>Surat Pemberitahuan Objek Pajak - <strong>{{ region_name }}</strong></p>
     </div>
 
-    <div class="form-card" style="margin-bottom: 2rem; border-top: 5px solid #2e7d32; background-color: #f1f8e9;">
-        <h3 style="margin-bottom: 0.5rem; color: #2e7d32;">Isi Otomatis via JSON</h3>
-        <p style="font-size: 0.9rem; color: #555; margin-bottom: 1rem;">Upload file JSON untuk mengisi form secara otomatis. Kunci (key) di JSON harus sesuai dengan nama field.</p>
-        <input type="file" id="jsonUpload" accept=".json" style="border: 1px dashed #2e7d32; padding: 1rem; background: white; cursor: pointer;">
+    <div class="upload-card">
+        <div class="upload-info">
+            <h3>Isi Otomatis via JSON</h3>
+            <p>Upload file JSON untuk mengisi form secara otomatis. Kunci (key) harus sesuai dengan nama field.</p>
+        </div>
+        <input type="file" id="jsonUpload" accept=".json" style="cursor: pointer; font-size: 0.9rem;">
     </div>
 
     {% with messages = get_flashed_messages() %}
       {% if messages %}
-        <div class="alert">
+        <div style="padding: 1rem; background: #ffebee; color: #c62828; border-radius: var(--radius); margin-bottom: 1.5rem;">
           {% for message in messages %}
             {{ message }}
           {% endfor %}
@@ -240,8 +351,14 @@
       {% endif %}
     {% endwith %}
 
-    <form class="form-card" action="/submit" method="POST" id="spopWizardForm">
-        <div class="wizard-progress" id="wizardProgress" aria-label="Tahapan formulir"></div>
+    <div class="form-layout">
+        <aside class="sidebar">
+            <div class="stepper-v" id="wizardProgress">
+                <!-- Steps injected via JS -->
+            </div>
+        </aside>
+
+        <form class="form-content" action="/submit" method="POST" id="spopWizardForm">
         
         <div class="section-title">Data Utama</div>
         <div class="form-row">
@@ -839,10 +956,11 @@
 
         <div class="wizard-actions">
             <button type="button" class="btn-secondary" id="prevStep">Sebelumnya</button>
-            <button type="button" class="btn-secondary" id="nextStep">Lanjut</button>
-            <button type="submit" class="btn-submit" id="submitStep">Simpan SPOP</button>
+            <button type="button" class="btn-next" id="nextStep">Lanjut ke Tahap Berikutnya</button>
+            <button type="submit" class="btn-submit" id="submitStep" style="display: none;">Selesaikan & Simpan SPOP</button>
         </div>
     </form>
+</div>
 </div>
 
 <script>
@@ -871,12 +989,20 @@
             }
             steps.push(step);
 
-            const pill = document.createElement('button');
-            pill.type = 'button';
-            pill.className = 'step-pill';
-            pill.textContent = title.textContent.trim();
-            pill.addEventListener('click', () => showStep(index));
-            progress.appendChild(pill);
+            // Create Vertical Step Item
+            const stepItem = document.createElement('div');
+            stepItem.className = 'step-item';
+            stepItem.innerHTML = `
+                <div class="step-circle">${index + 1}</div>
+                <div class="step-content">
+                    <span class="step-label">${title.textContent.trim()}</span>
+                    <span class="step-status">Menunggu</span>
+                </div>
+            `;
+            stepItem.addEventListener('click', () => {
+                if (index < current || validateCurrentStep()) showStep(index);
+            });
+            progress.appendChild(stepItem);
         });
 
         let current = 0;
@@ -890,19 +1016,44 @@
             }
             return true;
         }
+
         function showStep(index) {
             current = Math.max(0, Math.min(index, steps.length - 1));
+            
+            // Toggle Steps
             steps.forEach((step, i) => step.classList.toggle('active', i === current));
-            Array.from(progress.children).forEach((pill, i) => pill.classList.toggle('active', i === current));
+            
+            // Toggle Stepper UI
+            const items = Array.from(progress.querySelectorAll('.step-item'));
+            items.forEach((item, i) => {
+                item.classList.remove('active', 'completed');
+                const status = item.querySelector('.step-status');
+                
+                if (i === current) {
+                    item.classList.add('active');
+                    status.textContent = 'Sedang Diisi';
+                } else if (i < current) {
+                    item.classList.add('completed');
+                    status.textContent = 'Selesai';
+                } else {
+                    status.textContent = 'Menunggu';
+                }
+            });
+
+            // Toggle Buttons
             prevBtn.disabled = current === 0;
+            prevBtn.style.visibility = current === 0 ? 'hidden' : 'visible';
             nextBtn.style.display = current === steps.length - 1 ? 'none' : 'inline-flex';
             submitBtn.style.display = current === steps.length - 1 ? 'inline-flex' : 'none';
+            
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
+
         prevBtn.addEventListener('click', () => showStep(current - 1));
         nextBtn.addEventListener('click', () => {
             if (validateCurrentStep()) showStep(current + 1);
         });
+        
         showStep(0);
     })();
 
