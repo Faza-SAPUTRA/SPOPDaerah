@@ -338,9 +338,71 @@ def pdf_bytes_reportlab(data, kop_type):
         draw_mark(data.kondisi_pada_umumnya, 2, 423, 733)
         draw_mark(data.kondisi_pada_umumnya, 3, 599, 733)
         draw_mark(data.kondisi_pada_umumnya, 4, 772, 733)
+
+        draw_mark(data.konstruksi, 1, 248, 777)
+        draw_mark(data.konstruksi, 2, 423, 777)
+        draw_mark(data.konstruksi, 3, 599, 777)
+        draw_mark(data.konstruksi, 4, 772, 777)
+
+        draw_mark(data.atap, 1, 248, 807)
+        draw_mark(data.atap, 2, 423, 807)
+        draw_mark(data.atap, 3, 599, 807)
+        draw_mark(data.atap, 4, 772, 807)
+        draw_mark(data.atap, 5, 924, 807)
+
+        draw_mark(data.dinding, 1, 248, 864)
+        draw_mark(data.dinding, 2, 423, 864)
+        draw_mark(data.dinding, 3, 599, 864)
+        draw_mark(data.dinding, 4, 772, 864)
+        draw_mark(data.dinding, 5, 924, 864)
+        draw_mark(data.dinding, 6, 1047, 864)
+
+        draw_mark(data.lantai, 1, 248, 902)
+        draw_mark(data.lantai, 2, 423, 902)
+        draw_mark(data.lantai, 3, 599, 902)
+        draw_mark(data.lantai, 4, 772, 902)
+        draw_mark(data.lantai, 5, 924, 902)
+
+        draw_mark(data.langit_langit, 1, 248, 929)
+        draw_mark(data.langit_langit, 2, 423, 929)
+        draw_mark(data.langit_langit, 3, 599, 929)
+
         draw_cells(whole_number(data.jumlah_ac_split), 248, 1035, 54, 2)
         draw_cells(whole_number(data.jumlah_ac_window), 423, 1035, 52, 2)
+        draw_mark(data.ac_sentral, 1, 899, 1035)
+        draw_mark(data.ac_sentral, 2, 1047, 1035)
+
         draw_cells(whole_number(data.luas_kolam_renang), 248, 1100, 104, 4)
+        draw_mark(data.kolam_renang_tipe, 1, 248, 1144)
+        draw_mark(data.kolam_renang_tipe, 2, 448, 1144)
+
+        draw_cells(whole_number(data.luas_perkerasan_halaman_ringan), 698, 1144, 126, 5)
+        draw_cells(whole_number(data.luas_perkerasan_halaman_sedang), 698, 1172, 126, 5)
+        draw_cells(whole_number(data.luas_perkerasan_halaman_berat), 924, 1144, 127, 5)
+        draw_cells(whole_number(data.luas_perkerasan_halaman_dgn_penutup), 924, 1172, 127, 5)
+
+        draw_cells(whole_number(data.jumlah_lift_penumpang), 698, 1282, 52, 2)
+        draw_cells(whole_number(data.jumlah_lift_kapsul), 698, 1315, 52, 2)
+        draw_cells(whole_number(data.jumlah_lift_barang), 698, 1348, 52, 2)
+        draw_cells(whole_number(data.jumlah_tangga_berjalan_kurang), 1097, 1315, 52, 2)
+        draw_cells(whole_number(data.jumlah_tangga_berjalan_lebih), 1097, 1348, 52, 2)
+
+        draw_cells(whole_number(data.panjang_pagar), 248, 1437, 104, 4)
+        bahan = (data.bahan_pagar or '').lower()
+        if 'baja' in bahan or 'besi' in bahan:
+            pdf.setFont('Helvetica-Bold', 20)
+            pdf.drawCentredString(248 + 14, page_h - 1466 - 19, 'X')
+        if 'bata' in bahan or 'beton' in bahan or 'batako' in bahan:
+            pdf.setFont('Helvetica-Bold', 20)
+            pdf.drawCentredString(423 + 14, page_h - 1466 - 19, 'X')
+
+        draw_mark(data.pemadam_hydrant, 1, 949, 1437)
+        draw_mark(data.pemadam_hydrant, 2, 1047, 1437)
+        draw_mark(data.pemadam_sprinkler, 1, 949, 1466)
+        draw_mark(data.pemadam_sprinkler, 2, 1047, 1466)
+        draw_mark(data.pemadam_fire_alarm, 1, 949, 1495)
+        draw_mark(data.pemadam_fire_alarm, 2, 1047, 1495)
+
         draw_cells(whole_number(data.jumlah_saluran_pes_pabx), 248, 1561, 104, 4)
         draw_cells(whole_number(data.kedalaman_sumur_artesis), 899, 1561, 102, 4)
         pdf.showPage()

@@ -97,12 +97,21 @@
         }
         .print-btn:hover { background: #8C1822; }
         @media print {
-            body { background: #fff; }
+            body { 
+                background: #fff; 
+                -webkit-print-color-adjust: exact !important; 
+                print-color-adjust: exact !important; 
+            }
             .page {
                 margin: 0;
                 box-shadow: none;
                 transform: scale(.67);
                 transform-origin: top left;
+            }
+            .bg-img {
+                display: block !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
             .no-print { display: none; }
         }
